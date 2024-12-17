@@ -124,9 +124,9 @@ else
                                                     <td>@item.TenDv</td>
                                                   
                                                     <td>@item.MoTa</td>
-                                                    <td>@item.ThoiGian.Value.ToShortDateString()</td>
+                                                    <td>@item.ThoiGian.Value.ToString("dd/MM/yyyy")</td>
                                                     <td>
-                                                        <a href="@Url.Action("SuaViPham","Admin",new {mavp=item.MaVp})" class="btn btn-success">Edit</a>
+                                                        <a class="btn btn-success" onclick="MoSuaViPham('@item.MaVp', '@item.MoTa', '@item.ThoiGian', '@item.MaQn', '@item.Ghichu')">Edit</a>
                                                         <a class="btn btn-danger" onclick="XoaViPham(@item.MaVp)">Delete</a>
                                                     </td>
                                                 </tr>
@@ -139,6 +139,49 @@ else
                     </div>
                 </div>
             </section>
+        </div>
+    </div>
+    <!-- Modal Sửa Vi Phạm -->
+    <div class="modal fade" id="editViPhamModal" tabindex="-1" role="dialog" aria-labelledby="editViPhamModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <form id="frmSuaViPham" method="post">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="editViPhamModalLabel">Sửa Thông Tin Vi Phạm</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="editMoTa">Mô tả vi phạm:</label>
+                            <input type="text" class="form-control" id="editMoTa" placeholder="Nhập mô tả vi phạm">
+                        </div>
+                        <div class="form-group">
+                            <label for="editThoiGian">Thời gian vi phạm:</label>
+                            <input type="date" class="form-control" id="editThoiGian">
+                        </div>
+                        <div class="form-group">
+                            <label for="editQuanNhan">Chọn quân nhân:</label>
+                            <select class="form-control" id="editQuanNhan">
+                                <option style="display:none" value="">Chọn quân nhân</option>
+                                @foreach (var item in ChonQuanNhan)
+                                {
+                                    <option value="@item.Maqn">@item.Hoten</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="editGhiChu">Ghi chú:</label>
+                            <input type="text" class="form-control" id="editGhiChu" placeholder="Nhập ghi chú vi phạm">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy bỏ</button>
+                        <button type="button" class="btn btn-primary" id="confirmEditButton">Lưu</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
@@ -154,7 +197,7 @@ else
                             
                             <label for="thoigian">Nhập thời gian vi phạm</label>
                             <!-- Chuyển sang datetime-local -->
-                            <input type="datetime-local" class="form-control" id="thoigian">
+                            <input type="date" class="form-control" id="thoigian">
                             <label for="mahv">Chọn học viên vi phạm: </label>
                             <select class="form-control" id="mahv">
                                 <option style="display:none" value=""></option>
@@ -286,6 +329,59 @@ else
                 });
             };
         });
+            // Mở modal sửa vi phạm
+        function MoSuaViPham(mavp, mota, thoigian, mahv, ghichu) {
+            // Điền dữ liệu vào form modal
+            $('#editMoTa').val(mota);
+            const date = new Date(thoigian);
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0'); // Thêm 0 nếu cần
+            const day = String(date.getDate()).padStart(2, '0');
+            $('#editThoiGian').val(`${year}-${month}-${day}`);
+
+            $('#editQuanNhan').val(mahv);
+            $('#editGhiChu').val(ghichu);
+
+            // Xử lý sự kiện lưu khi nhấn nút "Lưu"
+            $('#confirmEditButton').off('click').on('click', function () {
+                var moTa = $('#editMoTa').val().trim();
+                var thoiGian = $('#editThoiGian').val();
+                var quanNhan = $('#editQuanNhan').val();
+                var ghiChu = $('#editGhiChu').val().trim();
+
+                if (moTa === "" || !thoiGian || !quanNhan) {
+                    alert("Vui lòng nhập đầy đủ thông tin.");
+                    return;
+                }
+
+                // Gửi dữ liệu qua AJAX
+                $.ajax({
+                    url: '/Admin/SuaViPham',
+                    type: 'POST',
+                    dataType: 'json',
+                    data: {
+                        mavp: mavp,
+                        mota: moTa,
+                        thoigian: thoiGian,
+                        mahv: quanNhan,
+                        ghichu: ghiChu
+                    },
+                    success: function (res) {
+                       
+                            $('#editViPhamModal').modal('hide');
+                           
+                            window.location.reload();
+                       
+                    },
+                    error: function () {
+                        alert("Đã xảy ra lỗi khi gửi yêu cầu. Vui lòng thử lại.");
+                    }
+                });
+            });
+
+            // Hiển thị modal
+            $('#editViPhamModal').modal('show');
+        }
     </script>
 }
 

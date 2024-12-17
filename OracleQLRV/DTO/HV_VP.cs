@@ -10,7 +10,7 @@
         public int MaVp { get; set; }
 
         public string MoTa { get; set; }
-
+        public string? Ghichu { get; set; }
 
         public DateTime? ThoiGian { get; set; }
         public int? MaCv { get; set; }

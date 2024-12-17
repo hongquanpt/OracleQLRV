@@ -1590,31 +1590,49 @@ namespace OracleQLRV.Controllers
         #region Quản lý danh sách vi phạm
         public IActionResult QuanLyViPham()
         {
+            List<HV_VP> pagedList = new List<HV_VP>();
+            var qn = obj.Quannhans.ToList();
+            using (var connection = obj.Database.GetDbConnection())
+            {
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    command.CommandText = "SP_GetAllViPhams";
+                    command.CommandType = CommandType.StoredProcedure;
 
-            var query = from qn in obj.Quannhans
-                        join vp in obj.Viphams on qn.Maqn equals vp.Mahv
-                        join dv in obj.Donvis on qn.Madv equals dv.Madv
-                        join cv in obj.Chucvus on qn.Macv equals cv.Macv
-                        join cb in obj.Capbacs on qn.Macapbac equals cb.Macapbac
-                        select new HV_VP
+                    var pRefCursor = new Oracle.ManagedDataAccess.Client.OracleParameter("p_refCursor",
+                        Oracle.ManagedDataAccess.Client.OracleDbType.RefCursor, System.Data.ParameterDirection.Output);
+                    command.Parameters.Add(pRefCursor);
+
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
                         {
-                            MaQn = qn.Maqn,
-                            HoTen = qn.Hoten,
-                            MaVp = vp.Mavp,
-                            MaDv = qn.Madv,
-                            MaCapBac = qn.Macapbac,
-                            MaCv = qn.Macv,
-                            TenCv = cv.Tencv,
-                            CapBac1 = cb.Capbac1,
-                            ThoiGian = vp.Thoigian,
-                            TenDv = dv.Tendv,
-                           
-                            MoTa = vp.Mota
-                        };
-            var pagedList = query.ToList();
-            ViewBag.ChonQuanNhan = (obj.Quannhans.ToList());
+                            var item = new HV_VP
+                            {
+                                MaQn = reader.GetInt32(reader.GetOrdinal("Maqn")),
+                                HoTen = reader.GetString(reader.GetOrdinal("Hoten")),
+                                MaVp = reader.GetInt32(reader.GetOrdinal("Mavp")),
+                                MaDv = reader.GetInt32(reader.GetOrdinal("Madv")),
+                                MaCapBac = reader.GetInt32(reader.GetOrdinal("Macapbac")),
+                                MaCv = reader.GetInt32(reader.GetOrdinal("Macv")),
+                                TenCv = reader.GetString(reader.GetOrdinal("Tencv")),
+                                CapBac1 = reader.GetString(reader.GetOrdinal("Capbac")),
+                                ThoiGian = reader.GetDateTime(reader.GetOrdinal("Thoigian")),
+                                TenDv = reader.GetString(reader.GetOrdinal("Tendv")),
+                                Ghichu = reader.IsDBNull(reader.GetOrdinal("Ghichu")) ? null : reader.GetString(reader.GetOrdinal("Ghichu")),
+                                MoTa = reader.IsDBNull(reader.GetOrdinal("Mota")) ? null : reader.GetString(reader.GetOrdinal("Mota"))
+                            };
+                            pagedList.Add(item);
+                        }
+                    }
+                }
+            }
+            
+            ViewBag.ChonQuanNhan = qn;
             return View(pagedList);
         }
+
         [HttpPost]
         public ActionResult ThemViPham(string mota,  DateTime thoigian, string ghichu, int mahv)
         {
