@@ -1,0 +1,301 @@
+﻿@model List<OracleQLRV.DTO.HV_VP>
+@using System.Text.Json
+@using OracleQLRV.authorize
+@using OracleQLRV.DTO
+@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpContextAccessor
+
+@{
+    var ChonQuanNhan = (List<Quannhan>)ViewBag.ChonQuanNhan;
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+    List<AccountRole> data = HttpContextAccessor.HttpContext.Session.GetJson<List<AccountRole>>("QuyenTK") ?? new List<AccountRole>();
+    var qh = data.FirstOrDefault(c => c.ActionName == "QuanLyViPham");
+}
+
+@if (qh == null)
+{
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Full Screen Alert</title>
+        <style>
+            body {
+                margin: 0;
+                font-family: Arial, sans-serif;
+            }
+
+            .fullscreen-alert {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.5);
+                align-items: center;
+                justify-content: center;
+                color: #fff;
+                text-align: center;
+                z-index: 1000;
+            }
+
+            .alert-content {
+                background-color: #343a40;
+                padding: 20px;
+                border-radius: 8px;
+            }
+
+            .close-btn {
+                cursor: pointer;
+                color: #fff;
+                font-size: 20px;
+                position: absolute;
+                top: 10px;
+                right: 10px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="fullscreen-alert" id="fullscreenAlert">
+            <div class="alert-content">
+                <span class="close-btn" onclick="closeFullscreenAlert()">&times;</span>
+                <h1>Truy cập thất bại</h1>
+                <p>Bạn không có quyền truy cập trang này. Vui lòng liên hệ với chúng tôi để nhận hỗ trợ.</p>
+            </div>
+        </div>
+
+        <script>
+            function showFullscreenAlert() {
+                document.getElementById('fullscreenAlert').style.display = 'flex';
+            }
+
+            function closeFullscreenAlert() {
+                document.getElementById('fullscreenAlert').style.display = 'none';
+            }
+
+            // Gọi hàm này khi trang web được tải
+            document.addEventListener('DOMContentLoaded', function () {
+                showFullscreenAlert();
+            });
+        </script>
+    </body>
+    </html>
+}
+else
+{
+    <div class="wrapper">
+        <div class="content-wrapper">
+            <section class="content">
+                <div class="container-fluid">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <label class="card-title">Quản lý vi phạm</label>
+                                    <button type="button" class="btn btn-primary" style="margin-left:70%" data-toggle="modal" data-target="#addViPhamModal">
+                                        Thêm vi phạm
+                                    </button>
+                                </div>
+                                <div class="card-body">
+                                    <table id="brandTable" class="table table-bordered table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Mã vi phạm</th>
+                                                <th>Họ tên</th>
+                                                <th>Chức vụ</th>
+                                                <th>Cấp bậc</th>
+                                                <th>Đơn vị</th>
+                                               
+                                                <th>Mô tả</th>
+                                                <th>Thời gian</th>
+                                                <th>Hành động</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var item in Model)
+                                            {
+                                                <tr>
+                                                    <td>@item.MaVp</td>
+                                                    <td>@item.HoTen</td>
+                                                    <td>@item.TenCv</td>
+                                                    <td>@item.CapBac1</td>
+                                                    <td>@item.TenDv</td>
+                                                  
+                                                    <td>@item.MoTa</td>
+                                                    <td>@item.ThoiGian.Value.ToShortDateString()</td>
+                                                    <td>
+                                                        <a href="@Url.Action("SuaViPham","Admin",new {mavp=item.MaVp})" class="btn btn-success">Edit</a>
+                                                        <a class="btn btn-danger" onclick="XoaViPham(@item.MaVp)">Delete</a>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- Modal thêm vi phạm -->
+    <div class="modal fade" id="addViPhamModal" tabindex="-1" role="dialog" aria-labelledby="addViPhamModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <form id="frmThemViPham" method="post" enctype="multipart/form-data">
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label for="mota">Nhập mô tả vi phạm</label>
+                            <input type="text" class="form-control" id="mota" placeholder="Nhập mô tả tại đây">
+                            
+                            <label for="thoigian">Nhập thời gian vi phạm</label>
+                            <!-- Chuyển sang datetime-local -->
+                            <input type="datetime-local" class="form-control" id="thoigian">
+                            <label for="mahv">Chọn học viên vi phạm: </label>
+                            <select class="form-control" id="mahv">
+                                <option style="display:none" value=""></option>
+                                @if (ChonQuanNhan != null)
+                                {
+                                    @foreach (var item in ChonQuanNhan)
+                                    {
+                                        <option value="@item.Maqn">@item.Hoten</option>
+                                    }
+                                }
+                            </select>
+                            <label for="ghichu">Nhập ghi chú vi phạm</label>
+                            <input type="text" class="form-control" id="ghichu" placeholder="Nhập ghi chú tại đây">
+                        </div>
+                        <div class="card-footer">
+                            <!-- Đổi nút thành submit, bỏ data-dismiss -->
+                            <button type="submit" class="btn btn-primary" id="confirm">Thêm vi phạm</button>
+                            <button type="button" class="btn btn-default" data-dismiss="modal" id="cancel">Hủy bỏ</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Xác Nhận Xóa -->
+    <div class="modal fade" id="confirmDeleteModal" tabindex="-1" role="dialog" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="confirmDeleteModalLabel">Bạn có chắc chắn muốn xóa vi phạm?</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" id="confirmDeleteButton">Xóa</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bao gồm thư viện jQuery -->
+    <script src="~/new/jquery-3.6.0.min.js"></script>
+
+    <!-- Bao gồm DataTables -->
+    <script src="~/Admin/plugins/datatables/jquery.dataTables.min.js"></script>
+    <script>
+        $('#brandTable').DataTable({
+            "paging": true,
+            "ordering": true,
+            "info": true,
+            "searching": true,
+            "language": {
+                "paginate": { "next": "Trang sau", "previous": "Trang trước" },
+                "info": "Hiển thị từ _START_ đến _END_ của _TOTAL_ vi phạm",
+                "search": "Tìm kiếm:"
+            }
+        });
+
+        $(document).ready(function () {
+            // Bắt sự kiện submit form thêm vi phạm
+            $('#frmThemViPham').on('submit', function (e) {
+                e.preventDefault(); // Ngăn hành vi submit mặc định
+
+                var mota = $('#mota').val().toString();
+               
+                var thoigian = $('#thoigian').val();
+                var ghichu = $('#ghichu').val().toString();
+                var mahv = $('#mahv').val();
+
+                if (mota.trim() === "" || mahv === "") {
+                    alert("Bạn chưa nhập đủ thông tin vi phạm.");
+                    return;
+                }
+
+                $.ajax({
+                    url: '/Admin/ThemViPham',
+                    data: {
+                        mota: mota,
+                       
+                        thoigian: thoigian,
+                        ghichu: ghichu,
+                        mahv: mahv
+                    },
+                    type: 'POST',
+                    dataType: 'json',
+                    success: function (res) {
+                        if (res.status === true) {
+                            // Đóng modal sau khi thêm thành công
+                            $('#addViPhamModal').modal('hide');
+                            window.location = '@Url.Action("QuanLyViPham", "Admin")';
+                        } else {
+                            alert("Thêm vi phạm thất bại. Vui lòng thử lại.");
+                        }
+                    },
+                    error: function () {
+                        alert("Đã xảy ra lỗi khi gửi yêu cầu. Vui lòng thử lại.");
+                    }
+                });
+            });
+
+            window.XoaViPham = function (mavp) {
+                var mavpInt = parseInt(mavp);
+
+                // Hiển thị modal xác nhận xóa
+                $('#confirmDeleteModal').modal('show');
+
+                // Xử lý khi người dùng xác nhận xóa
+                $('#confirmDeleteButton').off('click').on('click', function () {
+                    $.ajax({
+                        url: '/Admin/XoaViPham',
+                        data: { mavp: mavpInt },
+                        type: 'POST',
+                        dataType: 'json',
+                        success: function (res) {
+                            if (res.status === true) {
+                                $('#confirmDeleteModal').modal('hide');
+                                window.location = '@Url.Action("QuanLyViPham", "Admin")';
+                            } else {
+                                alert("Xóa vi phạm thất bại. Vui lòng thử lại.");
+                            }
+                        },
+                        error: function () {
+                            alert("Đã xảy ra lỗi khi gửi yêu cầu. Vui lòng thử lại.");
+                        }
+                    });
+                });
+            };
+        });
+    </script>
+}
+
+<!-- Các thư viện và plugin DataTables -->
+<script src="~/Admin/plugins/jquery/jquery.min.js"></script>
+<script src="~/Admin/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+<link rel="stylesheet" href="~/Admin/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css">
+<link rel="stylesheet" href="~/Admin/plugins/datatables-responsive/css/responsive.bootstrap4.min.css">
+<script src="~/Admin/plugins/datatables/jquery.dataTables.min.js"></script>
+<script src="~/Admin/plugins/datatables-bs4/js/dataTables.bootstrap4.min.js"></script>
+<script src="~/Admin/plugins/datatables-responsive/js/dataTables.responsive.min.js"></script>
+<script src="~/Admin/plugins/datatables-responsive/js/responsive.bootstrap4.min.js"></script>
+<script src="~/Admin/dist/js/adminlte.min.js"></script>

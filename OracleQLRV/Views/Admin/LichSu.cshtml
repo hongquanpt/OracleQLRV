@@ -1,0 +1,230 @@
+﻿@model X.PagedList.IPagedList<OracleQLRV.DTO.LS>
+@using System.Text.Json
+@using OracleQLRV.authorize
+@using Microsoft.AspNetCore.Http
+@using OracleQLRV.DTO;
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+    List<AccountRole> data = HttpContextAccessor.HttpContext.Session.GetJson<List<AccountRole>>("QuyenTK") ?? new List<AccountRole>();
+    var qh = data.FirstOrDefault(c => c.ActionName == "LichSu");
+    List<Quannhan> qn = HttpContextAccessor.HttpContext.Session.GetJson<List<Quannhan>>("QN") ?? new List<Quannhan>();
+}
+
+@if (qh == null)
+{
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Full Screen Alert</title>
+        <style>
+            body {
+                margin: 0;
+                font-family: Arial, sans-serif;
+            }
+
+            .fullscreen-alert {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.5);
+                align-items: center;
+                justify-content: center;
+                color: #fff;
+                text-align: center;
+                z-index: 1000;
+            }
+
+            .alert-content {
+                background-color: #343a40;
+                padding: 20px;
+                border-radius: 8px;
+            }
+
+            .close-btn {
+                cursor: pointer;
+                color: #fff;
+                font-size: 20px;
+                position: absolute;
+                top: 10px;
+                right: 10px;
+            }
+        </style>
+    </head>
+    <body>
+
+        <div class="fullscreen-alert" id="fullscreenAlert">
+            <div class="alert-content">
+                <span class="close-btn" onclick="closeFullscreenAlert()">&times;</span>
+                <h1>Truy cập thất bại</h1>
+                <p>Bạn không có quyền truy cập trang này. Vui lòng liên hệ với chúng tôi để nhận hỗ trợ </p>
+            </div>
+        </div>
+
+        <script>
+            function showFullscreenAlert() {
+                document.getElementById('fullscreenAlert').style.display = 'flex';
+            }
+
+            function closeFullscreenAlert() {
+                document.getElementById('fullscreenAlert').style.display = 'none';
+            }
+
+            // Gọi hàm này khi trang web được tải
+            document.addEventListener('DOMContentLoaded', function () {
+                showFullscreenAlert();
+            });
+        </script>
+
+    </body>
+    </html>
+
+
+}
+else
+{
+    <div>
+        <div class="content-wrapper">
+            <section class="content">
+                <div class="container-fluid">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3 class="card-title">Lịch sử ra ngoài</h3>
+                                </div>
+
+                                <div class="card-body">
+                                    <table id="example2" class="table table-bordered table-hover">
+                                        <thead>
+                                            <tr>
+
+                                                <th>Họ tên</th>
+                                                <th>Chức vụ</th>
+                                                <th>Cấp bậc</th>
+                                                <th>Đơn vị</th>
+                                                <th>Địa chỉ</th>
+                                                <th>Thời gian đi phép</th>
+                                                <th>Thời gian trả phép</th>
+                                                <th>Số giấy</th>
+                                                <th>Cán bộ duyệt phép</th>
+                                                <th>Tình trạng</th>
+                                                <th>Thời gian lấy giấy</th>
+                                                <th>Thời gian trả giấy</th>
+                                                <th>Thời gian ra cổng</th>
+                                                <th>Thời gian vào cổng</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var item in Model)
+                                            {
+                                                <tr>
+                                                    <td>@item.HoTen</td>
+                                                    <td>@item.TenCv</td>
+                                                    <td>@item.CapBac1</td>
+                                                    <td>@item.TenDv</td>
+                                                    <td>@item.DiaChi</td>
+                                                    <td>@item.ThoiGianRa</td>
+                                                    <td>@item.ThoiGianVao</td>
+                                                    <td>@item.SoGiay</td>
+
+                                                    <td>@qn.Where(c => c.Maqn == item.NguoiDuyet).FirstOrDefault().Hoten</td>
+                                                    @if (item.TinhTrang == 4)
+                                                    {
+                                                        <td>Đã hoàn thành</td>
+                                                    }
+                                                    @if (item.TinhTrang == 0)
+                                                    {
+                                                        <td>Bị từ chối</td>
+                                                    }
+                                                    <td>@item.ThoiGianLay</td>
+                                                    <td>@item.ThoiGianTra</td>
+                                                    <td>@item.ThoiGianRaC</td>
+                                                    <td>@item.ThoiGianVaoC</td>
+                                                </tr>
+                                            }
+                                        </tbody>
+
+                                    </table>
+                                    <div class="row">
+                                        <div class="col-sm-12 col-md-5">
+                                            <div class="dataTables_info" id="example1_info" role="status" aria-live="polite">
+                                                Danh sách từ @ViewBag.PageStartItem đến @ViewBag.PageEndItem trên tổng số @ViewBag.TotalItemCount quân nhân
+                                            </div>
+                                        </div>
+                                        <ul class="pagination">
+
+                                            @if (Model.HasPreviousPage)
+                                            {
+                                                <li class="page-item">
+                                                    <a class="page-link" href="@Url.Action("LichSu", new { page = Model.PageNumber - 1 })">Previous</a>
+                                                </li>
+
+                                            }
+                                            <li class="page-item  @(1 == Model.PageNumber ? "active" : "")">
+                                                <a class="page-link" href="@Url.Action("LichSu", new { page = 1 })">1</a>
+                                            </li>
+                                            @if (Model.PageNumber > 3)
+                                            {
+                                                <li class="page-item">
+                                                    <span class="page-link">...</span>
+                                                </li>
+                                            }
+                                            @for (int i = Model.PageNumber - 1; i <= Model.PageNumber + 1; i++)
+                                            {
+                                                if (i > 1 && i < Model.PageCount)
+                                                {
+                                                    <li class="page-item @(i == Model.PageNumber ? "active" : "")">
+                                                        <a class="page-link" href="@Url.Action("LichSu", new { page = i })">@i</a>
+                                                    </li>
+                                                }
+                                            }
+                                            @if (Model.PageNumber < Model.PageCount - 1)
+                                            {
+                                                <li class="page-item">
+                                                    <span class="page-link">...</span>
+                                                </li>
+                                            }
+                                            @if (Model.PageCount > 1)
+                                            {
+                                                <li class="page-item  @(Model.PageCount == Model.PageNumber ? "active" : "")">
+                                                    <a class="page-link" href="@Url.Action("LichSu", new { page = Model.PageCount })">@Model.PageCount</a>
+                                                </li>
+                                            }
+                                            @if (Model.HasNextPage)
+                                            {
+
+                                                <li class="page-item">
+                                                    <a class="page-link" href="@Url.Action("LichSu", new { page = Model.PageNumber + 1 })">Next</a>
+                                                </li>
+                                            }
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="card-footer">
+                                </div>
+                                <!-- /.card-body -->
+                            </div>
+                            <!-- /.card -->
+                            <!-- /.card -->
+                        </div>
+                        <!-- /.col -->
+                    </div>
+                    <!-- /.row -->
+                </div>
+                <!-- /.container-fluid -->
+            </section>
+
+        </div>
+
+
+
+
+
+    </div>
+}

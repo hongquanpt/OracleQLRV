@@ -1,0 +1,328 @@
+﻿@model X.PagedList.IPagedList<OracleQLRV.DTO.DSGT>
+@using System.Text.Json
+@using OracleQLRV.authorize
+@using OracleQLRV.DTO
+@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+    List<AccountRole> data = HttpContextAccessor.HttpContext.Session.GetJson<List<AccountRole>>("QuyenTK") ?? new List<AccountRole>();
+    var qh = data.FirstOrDefault(c => c.ActionName == "QuanLyDSGT");
+    List<Rangoai> rn = HttpContextAccessor.HttpContext.Session.GetJson<List<Rangoai>>("RN") ?? new List<Rangoai>();
+
+
+}
+
+@if (qh == null)
+{
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Full Screen Alert</title>
+        <style>
+            body {
+                margin: 0;
+                font-family: Arial, sans-serif;
+            }
+
+            .fullscreen-alert {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.5);
+                align-items: center;
+                justify-content: center;
+                color: #fff;
+                text-align: center;
+                z-index: 1000;
+            }
+
+            .alert-content {
+                background-color: #343a40;
+                padding: 20px;
+                border-radius: 8px;
+            }
+
+            .close-btn {
+                cursor: pointer;
+                color: #fff;
+                font-size: 20px;
+                position: absolute;
+                top: 10px;
+                right: 10px;
+            }
+        </style>
+    </head>
+    <body>
+
+        <div class="fullscreen-alert" id="fullscreenAlert">
+            <div class="alert-content">
+                <span class="close-btn" onclick="closeFullscreenAlert()">&times;</span>
+                <h1>Truy cập thất bại</h1>
+                <p>Bạn không có quyền truy cập trang này. Vui lòng liên hệ với chúng tôi để nhận hỗ trợ </p>
+            </div>
+        </div>
+
+        <script>
+            function showFullscreenAlert() {
+                document.getElementById('fullscreenAlert').style.display = 'flex';
+            }
+
+            function closeFullscreenAlert() {
+                document.getElementById('fullscreenAlert').style.display = 'none';
+            }
+
+            // Gọi hàm này khi trang web được tải
+            document.addEventListener('DOMContentLoaded', function () {
+                showFullscreenAlert();
+            });
+        </script>
+
+    </body>
+    </html>
+
+
+}
+else
+{
+    <div>
+        <div class="content-wrapper">
+            <section class="content">
+                <div class="container-fluid">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3 class="card-title">Danh sách giấy tờ ra ngoài</h3>
+                                </div>
+
+                                <!-- /.card-header -->
+                                <div class="card-body">
+                                    <table id="example2" class="table table-bordered table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Mã CTDS</th>
+                                                <th>Họ tên</th>
+                                                <th>Chức vụ</th>
+                                                <th>Cấp bậc</th>
+                                                <th>Đơn vị</th>
+                                                <th>Số giây</th>
+
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var item in Model)
+                                            {
+                                                <tr>
+                                                    @if (rn.Where(c => c.Mactds == item.MaCtds && c.Magiayto == item.MaGiayTo).FirstOrDefault() == null)
+                                                    {
+                                                        <td>@item.MaCtds</td>
+                                                        <td>@item.HoTen</td>
+                                                        <td>@item.TenCv</td>
+                                                        <td>@item.CapBac1</td>
+                                                        <td>@item.TenDv</td>
+                                                        <td>@item.SoGiay</td>
+
+                                                        <td>
+                                                            <a href="@Url.Action("RaNgoai","Admin",new {id=item.MaCtds,magiay=item.MaGiayTo,thoigianra = DateTime.Now})" class="btn btn-success">Ra Ngoài</a>
+                                                        </td>
+                                                    }
+                                                    else if (rn.Where(c => c.Mactds == item.MaCtds && c.Magiayto == item.MaGiayTo).FirstOrDefault().Thoigianvao == null)
+                                                    {
+                                                        <td>@item.MaCtds</td>
+                                                        <td>@item.HoTen</td>
+                                                        <td>@item.TenCv</td>
+                                                        <td>@item.CapBac1</td>
+                                                        <td>@item.TenDv</td>
+                                                        <td>@item.SoGiay</td>
+                                                        <td>
+                                                            <a href="@Url.Action("Vao","Admin",new {id=item.MaCtds, magiay= item.MaGiayTo})" class="btn btn-success">Vào học viện</a>
+                                                        </td>
+                                                    }
+
+
+
+                                                </tr>
+                                            }
+                                        </tbody>
+
+                                    </table>
+                                    <div class="row">
+                                        <div class="col-sm-12 col-md-5">
+                                            <div class="dataTables_info" id="example1_info" role="status" aria-live="polite">
+                                                Danh sách từ @ViewBag.PageStartItem đến @ViewBag.PageEndItem trên tổng số @ViewBag.TotalItemCount quân nhân
+                                            </div>
+                                        </div>
+                                        <ul class="pagination">
+
+                                            @if (Model.HasPreviousPage)
+                                            {
+                                                <li class="page-item">
+                                                    <a class="page-link" href="@Url.Action("QuanLyDSGT", new { page = Model.PageNumber - 1 })">Previous</a>
+                                                </li>
+
+                                            }
+                                            <li class="page-item  @(1 == Model.PageNumber ? "active" : "")">
+                                                <a class="page-link" href="@Url.Action("QuanLyDSGT", new { page = 1 })">1</a>
+                                            </li>
+                                            @if (Model.PageNumber > 3)
+                                            {
+                                                <li class="page-item">
+                                                    <span class="page-link">...</span>
+                                                </li>
+                                            }
+                                            @for (int i = Model.PageNumber - 1; i <= Model.PageNumber + 1; i++)
+                                            {
+                                                if (i > 1 && i < Model.PageCount)
+                                                {
+                                                    <li class="page-item @(i == Model.PageNumber ? "active" : "")">
+                                                        <a class="page-link" href="@Url.Action("QuanLyDSGT", new { page = i })">@i</a>
+                                                    </li>
+                                                }
+                                            }
+                                            @if (Model.PageNumber < Model.PageCount - 1)
+                                            {
+                                                <li class="page-item">
+                                                    <span class="page-link">...</span>
+                                                </li>
+                                            }
+                                            @if (Model.PageCount > 1)
+                                            {
+                                                <li class="page-item  @(Model.PageCount == Model.PageNumber ? "active" : "")">
+                                                    <a class="page-link" href="@Url.Action("QuanLyDSGT", new { page = Model.PageCount })">@Model.PageCount</a>
+                                                </li>
+                                            }
+                                            @if (Model.HasNextPage)
+                                            {
+
+                                                <li class="page-item">
+                                                    <a class="page-link" href="@Url.Action("QuanLyDSGT", new { page = Model.PageNumber + 1 })">Next</a>
+                                                </li>
+                                            }
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="modal fade" id="rangoai">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h4 class="modal-title">Thông tin qua cổng</h4>
+                                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                    <span aria-hidden="true">&times;</span>
+                                                </button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <form id="frmSuaDM" method="post">
+                                                    <div class="card-body">
+                                                        <!-- Loại bỏ trường "Chọn giấy tờ" và "Thời gian lấy giấy tờ" -->
+
+                                                        <div class="form-group" id="thoiGianTraGroup">
+                                                            <label for="ThoiGianTra">Thời gian ra ngoài:</label>
+                                                            <input type="datetime-local" class="form-control" id="ThoiGianTra" name="ThoiGianTra" required>
+                                                            <div class="valid-feedback">Valid.</div>
+                                                            <div class="invalid-feedback">Vui lòng chọn thời gian trả.</div>
+                                                        </div>
+
+                                                        <button type="button" style="margin-left:150px" class="btn btn-primary" id="confirm">Xác nhận</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                        <!-- /.modal-content -->
+                                    </div>
+                                    <!-- /.modal-dialog -->
+                                </div>
+                                <script>
+                                    document.addEventListener('DOMContentLoaded', function () {
+                                        var thoiGianTraGroup = document.getElementById('thoiGianTraGroup');
+                                        var thoiGianTraInput = document.getElementById('ThoiGianTra');
+
+                                        // Tự động cập nhật giá trị cho "Thời gian trả giấy tờ"
+                                        var currentDate = new Date();
+                                        thoiGianTraInput.value = currentDate.toISOString().slice(0, 16);
+
+                                        // Get references to modal elements
+                                        var modal = $('#modal-default');
+                                        var confirmButton = $('#confirm');
+
+                                        // Handle button click
+                                        $('[data-toggle="modal"]').on('click', function () {
+                                            // Get data attributes from the button
+                                            var id = $(this).data('id');
+                                            var magiay = $(this).data('magiay');
+
+                                            // Set values in the modal
+                                            modal.find('#ThoiGianTra').val(thoiGianTraInput.value); // Set default time
+                                            // You can set other values in the modal if needed
+
+                                            // Show the modal
+                                            modal.modal('show');
+
+                                            // Handle confirm button click inside the modal
+                                            confirmButton.on('click', function () {
+                                                var thoiGianTraValue = thoiGianTraInput.value.trim();
+
+                                                if (thoiGianTraValue === "") {
+                                                    alert("Vui lòng nhập đủ thông tin.");
+                                                } else {
+                                                    // Chuyển đổi giá trị ngày giờ thành định dạng phù hợp cho SQL Server
+                                                    var thoiGianTraFormatted = new Date(thoiGianTraValue).toISOString().slice(0, 19).replace("T", " ");
+
+                                                    $.ajax({
+                                                        url: '/Admin/RaNgoai',
+                                                        data: {
+                                                            thoiGianTra: thoiGianTraFormatted,
+                                                            id: id,
+                                                            magiay: magiay
+                                                        },
+                                                        type: 'POST',
+                                                        dataType: 'json',
+                                                        success: function (res) {
+                                                            if (res.status == true) {
+                                                                window.location = '@Url.Action("QuanLyDanhSach", "Admin")';
+                                                                Swal.fire({
+                                                                    position: 'center',
+                                                                    icon: 'success',
+                                                                    title: 'Thêm thành công',
+                                                                    showConfirmButton: false,
+                                                                    timer: 100
+                                                                });
+                                                            }
+                                                        },
+                                                        error: function (err) {
+                                                            console.log(err);
+                                                            alert("Đã xảy ra lỗi khi thêm yêu cầu.");
+                                                        }
+                                                    });
+
+                                                    // Hide the modal after processing
+                                                    modal.modal('hide');
+                                                }
+                                            });
+                                        });
+                                    });
+
+                                </script>
+
+                                <!-- /.card-body -->
+                            </div>
+                            <!-- /.card -->
+                            <!-- /.card -->
+                        </div>
+                        <!-- /.col -->
+                    </div>
+                    <!-- /.row -->
+                </div>
+                <!-- /.container-fluid -->
+            </section>
+
+        </div>
+        <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+
+    </div>
+}

@@ -1,0 +1,327 @@
+﻿@model List<OracleQLRV.DTO.TT_TK>
+@using System.Text.Json
+@using OracleQLRV.authorize
+@using OracleQLRV.DTO
+@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+    var nhomquyen = (List<OracleQLRV.Models.NhomQuyen>)ViewBag.nhomquyen;
+    List<AccountRole> data = HttpContextAccessor.HttpContext.Session.GetJson<List<AccountRole>>("QuyenTK") ?? new List<AccountRole>();
+    var qh = data.FirstOrDefault(c => c.ActionName == "QuanLyTK");
+    var ChonQuanNhan = (List<Quannhan>)ViewBag.ChonQuanNhan;
+    var ChonCapBac = (List<Capbac>)ViewBag.ChonCapBac;
+    var ChonChucVu = (List<Chucvu>)ViewBag.ChonChucVu;
+    var ChonDonVi = (List<Donvi>)ViewBag.ChonDonVi;
+    var ChonNhomQuyen = (List<NhomQuyen>)ViewBag.ChonNhomQuyen;
+    var ChonNhom = (List<Nhom>)ViewBag.ChonNhom;
+
+}
+@if (qh == null)
+{
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Full Screen Alert</title>
+        <style>
+            body {
+                margin: 0;
+                font-family: Arial, sans-serif;
+            }
+
+            .fullscreen-alert {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.5);
+                align-items: center;
+                justify-content: center;
+                color: #fff;
+                text-align: center;
+                z-index: 1000;
+            }
+
+            .alert-content {
+                background-color: #343a40;
+                padding: 20px;
+                border-radius: 8px;
+            }
+
+            .close-btn {
+                cursor: pointer;
+                color: #fff;
+                font-size: 20px;
+                position: absolute;
+                top: 10px;
+                right: 10px;
+            }
+        </style>
+    </head>
+    <body>
+
+        <div class="fullscreen-alert" id="fullscreenAlert">
+            <div class="alert-content">
+                <span class="close-btn" onclick="closeFullscreenAlert()">&times;</span>
+                <h1>Truy cập thất bại</h1>
+                <p>Bạn không có quyền truy cập trang này. Vui lòng liên hệ với chúng tôi để nhận hỗ trợ </p>
+            </div>
+        </div>
+
+        <script>
+            function showFullscreenAlert() {
+                document.getElementById('fullscreenAlert').style.display = 'flex';
+            }
+
+            function closeFullscreenAlert() {
+                document.getElementById('fullscreenAlert').style.display = 'none';
+            }
+
+            // Gọi hàm này khi trang web được tải
+            document.addEventListener('DOMContentLoaded', function () {
+                showFullscreenAlert();
+            });
+        </script>
+
+    </body>
+    </html>
+
+
+}
+else
+{
+    <div class="wrapper">
+
+        <!-- Content Wrapper. Contains page content -->
+        <div class="content-wrapper">
+            <!-- Content Header (Page header) -->
+            <!-- Main content -->
+            <section class="content">
+                <div class="container-fluid">
+                    <div class="row">
+                        <div class="col-12">
+
+
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3 class="card-title">Quản lý tài khoản </h3>
+                                </div>
+
+
+                                <!-- /.card-header -->
+                                <div class="card-body">
+                                    <table id="example1" class="table table-bordered table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Mã TK</th>
+                                                <th>Tên đăng nhập</th>
+                                                <th>Chủ tài khoản</th>
+                                                <th>Cấp bậc</th>
+                                                <th>Chức vụ</th>
+                                                <th>Đơn vị</th>
+                                                <th>Nhóm tài khoản</th>
+
+                                                <th>Xóa</th>
+
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var item in Model)
+                                            {
+                                                <tr>
+                                                    <td>@item.MaTaiKhoan</td>
+                                                    <td>@item.Tdn</td>
+                                                    <td>@item.HoTen</td>
+                                                    <td>@item.CapBac1</td>
+                                                    <td>@item.TenCv</td>
+                                                    <td>@item.TenDv</td>
+                                                    <td>@item.TenNhom</td>
+                                                    @*   <td>
+                                                        <a href="@Url.Action("SuaTaiKhoan","Admin",new {mataikhoan=item.MaTaiKhoan})" class="btn btn-success">Edit</a>
+                                                    </td> *@
+                                                    <td><a class="btn btn-success" onclick="XoaTK(@item.MaTaiKhoan)">Delete</a></td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+
+                                   
+                                </div>
+                                <div class="card-footer">
+                                    <button class="btn btn-primary" data-dismiss="modal" id="confirmThem" onclick="Them()">Thêm tài khoản mới</button>
+                                    @*<a href="#" class="btn btn-secondary" style="display: none;"><i class="material-icons">&#xE24D;</i> <span>Xuất Excel</span></a>*@
+                                </div>
+                                <!-- /.card-body -->
+                            </div>
+                            <!-- /.card-header -->
+                            <!-- /.card-body -->
+                        </div>
+                        <!-- /.card -->
+                    </div>
+                    <!-- /.col -->
+                </div>
+                <!-- /.row -->
+            </section>
+            <form id="frmThemTaiKhoan" method="post" aria-hidden="true" tabindex="-1" role="dialog" style="display: none;" enctype="multipart/form-data">
+                <div class="card-body">
+                    <div class="form-group">
+                        <label for="exampleInputPassword1">Nhập tên đăng nhập</label>
+                        <input type="text" class="form-control" id="tdn" placeholder="Nhập tên đăng nhập mới tại đây">
+                        <label for="exampleInputPassword1">Nhập mật khẩu</label>
+                        <input type="text" class="form-control" id="matkhau" placeholder="Nhập mật khẩu tại đây">
+
+                        <label for="exampleInputPassword1">Chọn chủ tài khoản</label>
+                        <select class="form-control" id="maqn">
+                            <option style="display:none" value=""></option>
+                            @if (ChonQuanNhan != null)
+                            {
+                                @foreach (var item in ChonQuanNhan)
+                                {
+                                    <option value="@item.Maqn">@item.Hoten</option>
+                                }
+                            }
+                        </select>
+                        <label for="exampleInputPassword1">Chọn nhóm</label>
+                        <select class="form-control" id="manhom">
+                            <option style="display:none" value=""></option>
+                            @if (ChonNhom != null)
+                            {
+                                @foreach (var item in ChonNhom)
+                                {
+                                    <option value="@item.Manhom">@item.Tennhom</option>
+                                }
+                            }
+                        </select>
+
+                    </div>
+                    <div class="card-footer">
+                        <button type="button" class="btn btn-primary" data-dismiss="modal" id="confirm">Thêm tài khoản</button>
+                        <button type="button" class="btn btn-default" data-dismiss="modal" id="cancel">Hủy bỏ</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- Đoạn mã HTML cho modal xác nhận xóa -->
+    <div class="modal fade" id="confirmDeleteModal" tabindex="-1" role="dialog" aria-labelledby="confirmDeleteModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="confirmDeleteModalLabel">Bạn có chắc chắn muốn xóa tài khoản?</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" id="confirmDeleteButton">Xóa</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Đoạn mã JavaScript để xử lý sự kiện xóa -->
+    <script>
+        function Them() {
+            var form = document.getElementById("frmThemTaiKhoan");
+            form.setAttribute("aria-hidden", "false");
+            form.setAttribute("tabindex", "0");
+            form.style.display = "block";
+            $('#confirm').on('click', function () {
+                var tdn = $('#tdn').val().toString();
+                var matkhau = $('#matkhau').val().toString();
+                var maqn = parseInt($('#maqn').val());
+                var manhom = parseInt($('#manhom').val());
+
+
+                if (tdn.trim() === "" || matkhau.trim() === "" || (typeof maqn !== 'number' || !Number.isInteger(maqn))) {
+                    // Kiểm tra nếu trường TenDM rỗng
+                    alert("Bạn chưa nhập đủ thông tin tài khoản.");
+                } else {
+                    // Nếu trường TenDM không rỗng, tiến hành gửi yêu cầu AJAX
+                    $.ajax({
+                        url: '/Admin/ThemTaiKhoan', // Điều chỉnh URL nếu cần thiết
+                        data: {
+                            tdn: tdn,
+                            matkhau: matkhau,
+                            maqn: maqn,
+                            manhom: manhom
+
+                        },
+                        type: 'POST',
+                        dataType: 'json',
+                        success: function (res) {
+                            if (res.status == true) {
+                                // Đóng modal sau khi thêm thành công
+                                form.setAttribute("aria-hidden", "true");
+                                form.setAttribute("tabindex", "-1");
+                                form.style.display = "none";
+                                window.location = '@Url.Action("QuanLyTK", "Admin")';
+                            }
+                        }
+                    });
+                }
+            });
+            $('#cancel').on('click', function () {
+                form.setAttribute("aria-hidden", "true");
+                form.setAttribute("tabindex", "-1");
+                form.style.display = "none";
+            });
+        }
+        function XoaTK(ma) {
+            var matk = parseInt(ma);
+
+            // Hiển thị modal xác nhận xóa
+            $('#confirmDeleteModal').modal('show');
+
+            // Xử lý sự kiện khi người dùng xác nhận xóa
+            $('#confirmDeleteButton').on('click', function () {
+                $.ajax({
+                    url: '/Admin/XoaTK',
+                    data: {
+                        matk: matk
+                    },
+                    type: 'POST',
+                    dataType: 'json',
+                    success: function (res) {
+                        if (res.status == true) {
+                            // Đóng modal sau khi xóa thành công
+                            $('#confirmDeleteModal').modal('hide');
+                            window.location = '@Url.Action("QuanLyTK", "Admin")';
+                        }
+                    }
+                });
+            });
+        }
+        $("#filterButton").click(function () {
+            // Lấy các giá trị từ các phần tử trên trang
+            const tenctk = $("input[name='tenctk']").val();
+            const matk = $("input[name='matk']").val();
+            const tendc = $("input[name='tendc']").val();
+            const sdt = $("input[name='sdt']").val();
+            const email = $("input[name='email']").val();
+            const chvu = $("#ChucVu").val();
+
+            // Sử dụng `window.location.href` để chuyển hướng đến URL
+            const url = `@Url.Action("QuanLyTK", "Admin")?tenctk=${tenctk}&matk=${matk}&tendc=${tendc}&sdt=${sdt}&email=${email}&chvu=${chvu}`;
+            window.location.href = url;
+        });
+    </script>
+
+
+    <!-- Control Sidebar -->
+    <aside class="control-sidebar control-sidebar-dark">
+        <!-- Control sidebar content goes here -->
+    </aside>
+
+    <script src="~/Admin/dist/js/adminlte.min.js"></script>
+
+
+}
+
+

@@ -1,0 +1,444 @@
+﻿@model List<OracleQLRV.DTO.TT_QN>
+    @using System.Text.Json
+    @using OracleQLRV.authorize
+    @using OracleQLRV.DTO
+    @using Microsoft.AspNetCore.Http
+    @inject IHttpContextAccessor HttpContextAccessor
+@{
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+    List<AccountRole> data = HttpContextAccessor.HttpContext.Session.GetJson<List<AccountRole>>("QuyenTK") ?? new List<AccountRole>();
+    var qh = data.FirstOrDefault(c => c.ActionName == "QuanLyQuanNhan");
+
+    var ChonDonVi = (List<Donvi>)ViewBag.ChonDonVi;
+    var ChonChucVu = (List<Chucvu>)ViewBag.ChonChucVu;
+    var ChonCapBac = (List<Capbac>)ViewBag.ChonCapbac;
+    var diachi = ViewBag.diachi;
+    var hoten = ViewBag.hoten;
+    var maqn = ViewBag.maqn;
+    var ChucVu = ViewBag.ChucVu;
+    var CapBac = ViewBag.CapBac;
+    var DonVi = ViewBag.DonVi;
+}
+
+
+@if (qh == null)
+{
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Full Screen Alert</title>
+        <style>
+            body {
+                margin: 0;
+                font-family: Arial, sans-serif;
+            }
+
+            .fullscreen-alert {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.5);
+                align-items: center;
+                justify-content: center;
+                color: #fff;
+                text-align: center;
+                z-index: 1000;
+            }
+
+            .alert-content {
+                background-color: #343a40;
+                padding: 20px;
+                border-radius: 8px;
+            }
+
+            .close-btn {
+                cursor: pointer;
+                color: #fff;
+                font-size: 20px;
+                position: absolute;
+                top: 10px;
+                right: 10px;
+            }
+        </style>
+    </head>
+    <body>
+
+        <div class="fullscreen-alert" id="fullscreenAlert">
+            <div class="alert-content">
+                <span class="close-btn" onclick="closeFullscreenAlert()">&times;</span>
+                <h1>Truy cập thất bại</h1>
+                <p>Bạn không có quyền truy cập trang này. Vui lòng liên hệ với chúng tôi để nhận hỗ trợ.</p>
+            </div>
+        </div>
+
+        <script>
+            function showFullscreenAlert() {
+                document.getElementById('fullscreenAlert').style.display = 'flex';
+            }
+
+            function closeFullscreenAlert() {
+                document.getElementById('fullscreenAlert').style.display = 'none';
+            }
+
+            // Gọi hàm này khi trang web được tải
+            document.addEventListener('DOMContentLoaded', function () {
+                showFullscreenAlert();
+            });
+        </script>
+
+    </body>
+    </html>
+}
+else
+{
+    <div class="wrapper">
+        <div class="content-wrapper">
+            <section class="content">
+                <div class="container-fluid">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <label class="card-title">Quản lý quân nhân</label>
+                                    <button type="button" class="btn btn-primary" style="margin-left:70%" data-toggle="modal" data-target="#addCapBacModal">
+                                        Thêm quân nhân
+                                    </button>
+                                </div>
+                                <div class="card-body">
+                                    <!-- Bảng hiển thị hãng -->
+                                    <table id="brandTable" class="table table-bordered table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>STT</th>
+                                                <th>Họ tên</th>
+                                                <th>Chức vụ</th>
+                                                <th>Cấp bậc</th>
+                                                <th>Đơn vị</th>
+                                                <th>Địa chỉ</th>
+                                                <th>Hành động</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var item in Model)
+                                            {
+                                                <tr>
+                                                    <td>@item.MaQn</td>
+                                                    <td>@item.HoTen</td>
+                                                    <td>@item.TenCv</td>
+                                                    <td>@item.CapBac1</td>
+                                                    <td>@item.TenDv</td>
+                                                    <td>@item.DiaChi</td>
+                                                    <td>
+                                                        <a class="btn btn-success" onclick="MoSuaQuanNhan('@item.MaQn', '@item.HoTen', '@item.MaDv', '@item.MaCv', '@item.MaCapBac', '@item.DiaChi')">Edit</a>
+                                                        <a class="btn btn-danger" onclick="XoaQuanNhan(@item.MaQn)">Delete</a>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+    <div class="modal fade" id="addCapBacModal" tabindex="-1" role="dialog" aria-labelledby="addCapBacModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <form id="frmThemQuanNhan" method="post"  enctype="multipart/form-data">
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label for="exampleInputPassword1">Nhập tên quân nhân</label>
+                            <input type="text" class="form-control" id="hoten" placeholder="Nhập tên quân nhân mới tại đây">
+                            <label for="exampleInputPassword1">Chọn đơn vị của quân nhân</label>
+                            <select class="form-control" id="madv">
+                                <option style="display:none" value=""></option>
+                                @if (ChonDonVi != null)
+                                {
+                                    @foreach (var item in ChonDonVi)
+                                    {
+                                        <option value="@item.Madv">@item.Tendv</option>
+                                    }
+                                }
+                            </select>
+                            <label for="exampleInputPassword1">Chọn chức vụ của quân nhân</label>
+                            <select class="form-control" id="macv">
+                                <option style="display:none" value=""></option>
+                                @if (ChonChucVu != null)
+                                {
+                                    @foreach (var item in ChonChucVu)
+                                    {
+                                        <option value="@item.Macv">@item.Tencv</option>
+                                    }
+                                }
+                            </select>
+                            <label for="exampleInputPassword1">Chọn cấp bậc của quân nhân</label>
+                            <select class="form-control" id="macapbac">
+                                <option style="display:none" value=""></option>
+                                @if (ChonCapBac != null)
+                                {
+                                    @foreach (var item in ChonCapBac)
+                                    {
+                                        <option value="@item.Macapbac">@item.Capbac1</option>
+                                    }
+                                }
+                            </select>
+                            <label for="exampleInputPassword1">Nhập địa chỉ quân nhân</label>
+                            <input type="text" class="form-control" id="diachi" placeholder="Nhập địa chỉ quân nhân mới tại đây">
+                        </div>
+                        <div class="card-footer">
+                            <button type="submit" class="btn btn-primary" id="confirm">Thêm quân nhân</button>
+                            <button type="button" class="btn btn-default" data-dismiss="modal" id="cancel">Hủy bỏ</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Xác Nhận Xóa -->
+    <div class="modal fade" id="confirmDeleteModal" tabindex="-1" role="dialog" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="confirmDeleteModalLabel">Bạn có chắc chắn muốn xóa quân nhân?</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" id="confirmDeleteButton">Xóa</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Modal Sửa Quân Nhân -->
+    <div class="modal fade" id="editQuanNhanModal" tabindex="-1" role="dialog" aria-labelledby="editQuanNhanModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <form id="frmSuaQuanNhan" method="post">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="editQuanNhanModalLabel">Sửa Thông Tin Quân Nhân</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="editHoTen">Họ tên:</label>
+                            <input type="text" class="form-control" id="editHoTen" placeholder="Nhập họ tên quân nhân">
+                        </div>
+                        <div class="form-group">
+                            <label for="editDonVi">Đơn vị:</label>
+                            <select class="form-control" id="editDonVi">
+                                <option style="display:none" value="">Chọn đơn vị</option>
+                                @foreach (var item in ChonDonVi)
+                                {
+                                    <option value="@item.Madv">@item.Tendv</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="editChucVu">Chức vụ:</label>
+                            <select class="form-control" id="editChucVu">
+                                <option style="display:none" value="">Chọn chức vụ</option>
+                                @foreach (var item in ChonChucVu)
+                                {
+                                    <option value="@item.Macv">@item.Tencv</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="editCapBac">Cấp bậc:</label>
+                            <select class="form-control" id="editCapBac">
+                                <option style="display:none" value="">Chọn cấp bậc</option>
+                                @foreach (var item in ChonCapBac)
+                                {
+                                    <option value="@item.Macapbac">@item.Capbac1</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="editDiaChi">Địa chỉ:</label>
+                            <input type="text" class="form-control" id="editDiaChi" placeholder="Nhập địa chỉ">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy bỏ</button>
+                        <button type="button" class="btn btn-primary" id="confirmEditButton">Lưu</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- Bao gồm thư viện jQuery trước -->
+    <script src="~/new/jquery-3.6.0.min.js"></script>
+
+    <!-- Bao gồm DataTables sau -->
+    <script src="~/Admin/plugins/datatables/jquery.dataTables.min.js"></script>
+
+    <script>
+                    // Khởi tạo DataTable
+                       $('#brandTable').DataTable({
+                           "paging": true,
+                           "ordering": true,
+                           "info": true,
+                           "searching": true,
+                           "language": {
+                               "paginate": { "next": "Trang sau", "previous": "Trang trước" },
+                               "info": "Hiển thị từ _START_ đến _END_ của _TOTAL_ cấp bậc",
+                               "search": "Tìm kiếm:"
+                           }
+                       });
+                   $(document).ready(function () {
+
+
+                       // Xử lý sự kiện submit của form Thêm cấp bậc
+                       $('#frmThemQuanNhan').on('submit', function (e) {
+                           e.preventDefault(); // Ngăn chặn hành vi submit mặc định
+
+                           var hoten = $('#hoten').val().toString().trim();
+        var madv = parseInt($('#madv').val());
+        var macv = parseInt($('#macv').val());
+        var macapbac = parseInt($('#macapbac').val());
+        var diachi = $('#diachi').val().toString().trim();
+
+                           if (hoten === "" || diachi === "") {
+                               alert("Bạn chưa nhập đủ thông tin quân nhân.");
+                               return;
+                           }
+
+                           $.ajax({
+                               url: '/Admin/ThemQuanNhan', // Điều chỉnh URL nếu cần thiết
+        data: {
+            hoten: hoten,
+            madv: madv,
+            macv: macv,
+            macapbac: macapbac,
+            diachi: diachi
+        },
+        type: 'POST',
+        dataType: 'json',
+                               success: function (res) {
+                                   if (res.status === true) {
+                                       // Đóng modal sau khi thêm thành công
+                                       $('#addCapBacModal').modal('hide');
+                                       // Tải lại trang hoặc cập nhật DataTable
+                                       window.location = '@Url.Action("QuanLyQuanNhan", "Admin")';
+                                   } else {
+                                       alert("Thêm quân nhân thất bại. Vui lòng thử lại.");
+                                   }
+                               },
+                               error: function () {
+                                   alert("Đã xảy ra lỗi khi gửi yêu cầu. Vui lòng thử lại.");
+                               }
+                           });
+                       });
+
+                       // Xử lý sự kiện Xóa cấp bậc
+                       window.XoaQuanNhan = function (macb) {
+                           var maqn = parseInt(macb);
+
+                           // Hiển thị modal xác nhận xóa
+                           $('#confirmDeleteModal').modal('show');
+
+                           // Xử lý sự kiện khi người dùng xác nhận xóa
+                           $('#confirmDeleteButton').off('click').on('click', function () { // Sử dụng .off để tránh gắn nhiều sự kiện
+                               $.ajax({
+                                   url: '/Admin/XoaQuanNhan',
+                                   data: {
+                                        maqn: maqn
+                                   },
+                                   type: 'POST',
+                                   dataType: 'json',
+                                   success: function (res) {
+                                      
+                                           // Đóng modal sau khi xóa thành công
+                                           $('#confirmDeleteModal').modal('hide');
+                                           window.location = '@Url.Action("QuanLyQuanNhan", "Admin")';
+                                       
+                                   },
+                                   error: function () {
+                                       alert("Đã xảy ra lỗi khi gửi yêu cầu. Vui lòng thử lại.");
+                                   }
+                               });
+                           });
+                       };
+
+                       // Nếu bạn có các nút tìm kiếm, bạn có thể thêm xử lý sự kiện tương tự
+                       // Ví dụ:
+                       // $("#filterButton").click(function () {
+                       //     // Xử lý tìm kiếm
+                       // });
+                   });
+                        function MoSuaQuanNhan(maqn, hoten, madv, macv, macapbac, diachi) {
+            // Điền dữ liệu hiện tại vào form modal
+            $('#editHoTen').val(hoten);
+            $('#editDonVi').val(madv);
+            $('#editChucVu').val(macv);
+            $('#editCapBac').val(macapbac);
+            $('#editDiaChi').val(diachi);
+
+            // Xử lý sự kiện lưu khi người dùng bấm nút Lưu
+            $('#confirmEditButton').off('click').on('click', function () {
+                var hoTen = $('#editHoTen').val().trim();
+                var donVi = $('#editDonVi').val();
+                var chucVu = $('#editChucVu').val();
+                var capBac = $('#editCapBac').val();
+                var diaChi = $('#editDiaChi').val().trim();
+
+                if (hoTen === "" || !donVi || !chucVu || !capBac || diaChi === "") {
+                    alert("Vui lòng nhập đầy đủ thông tin.");
+                    return;
+                }
+
+                // Gửi dữ liệu qua AJAX
+                $.ajax({
+                    url: '/Admin/SuaQuanNhan',
+                    type: 'POST',
+                    dataType: 'json',
+                    data: {
+                        maqn: maqn,
+                        hoten: hoTen,
+                        madv: donVi,
+                        macv: chucVu,
+                        macapbac: capBac,
+                        diachi: diaChi
+                    },
+                    success: function (res) {
+                        
+                            $('#editQuanNhanModal').modal('hide');
+                           
+                            window.location.reload();
+                     
+                    },
+                    error: function () {
+                        alert("Đã xảy ra lỗi. Vui lòng thử lại.");
+                    }
+                });
+            });
+
+            // Hiển thị modal
+            $('#editQuanNhanModal').modal('show');
+        }
+    </script>
+
+}
+<!-- Bao gồm các thư viện và plugin DataTables -->
+<script src="~/Admin/plugins/jquery/jquery.min.js"></script>
+<script src="~/Admin/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+<link rel="stylesheet" href="~/Admin/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css">
+<link rel="stylesheet" href="~/Admin/plugins/datatables-responsive/css/responsive.bootstrap4.min.css">
+<script src="~/Admin/plugins/datatables/jquery.dataTables.min.js"></script>
+<script src="~/Admin/plugins/datatables-bs4/js/dataTables.bootstrap4.min.js"></script>
+<script src="~/Admin/plugins/datatables-responsive/js/dataTables.responsive.min.js"></script>
+<script src="~/Admin/plugins/datatables-responsive/js/responsive.bootstrap4.min.js"></script>
+<script src="~/Admin/dist/js/adminlte.min.js"></script>

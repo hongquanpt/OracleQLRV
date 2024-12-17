@@ -1,0 +1,393 @@
+﻿@model List<OracleQLRV.Models.Giayto>
+@using System.Text.Json
+@using OracleQLRV.authorize
+@using OracleQLRV.DTO
+@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+    var ChonDonVi = (List<Donvi>)ViewBag.ChonDonVi;
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+    List<AccountRole> data = HttpContextAccessor.HttpContext.Session.GetJson<List<AccountRole>>("QuyenTK") ?? new List<AccountRole>();
+    var qh = data.FirstOrDefault(c => c.ActionName == "QuanLyGiayTo");
+    // var ChonDonVi = (List<Donvi>)ViewBag.ChonDonVi;
+    var magiayto = ViewBag.magiayto;
+    var loai = ViewBag.loai;
+    var sogiay = ViewBag.sohgiay;
+    var madv = ViewBag.madv;
+}
+@if (qh == null)
+{
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Full Screen Alert</title>
+        <style>
+            body {
+                margin: 0;
+                font-family: Arial, sans-serif;
+            }
+
+            .fullscreen-alert {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.5);
+                align-items: center;
+                justify-content: center;
+                color: #fff;
+                text-align: center;
+                z-index: 1000;
+            }
+
+            .alert-content {
+                background-color: #343a40;
+                padding: 20px;
+                border-radius: 8px;
+            }
+
+            .close-btn {
+                cursor: pointer;
+                color: #fff;
+                font-size: 20px;
+                position: absolute;
+                top: 10px;
+                right: 10px;
+            }
+        </style>
+    </head>
+    <body>
+
+        <div class="fullscreen-alert" id="fullscreenAlert">
+            <div class="alert-content">
+                <span class="close-btn" onclick="closeFullscreenAlert()">&times;</span>
+                <h1>Truy cập thất bại</h1>
+                <p>Bạn không có quyền truy cập trang này. Vui lòng liên hệ với chúng tôi để nhận hỗ trợ.</p>
+            </div>
+        </div>
+
+        <script>
+            function showFullscreenAlert() {
+                document.getElementById('fullscreenAlert').style.display = 'flex';
+            }
+
+            function closeFullscreenAlert() {
+                document.getElementById('fullscreenAlert').style.display = 'none';
+            }
+
+            // Gọi hàm này khi trang web được tải
+            document.addEventListener('DOMContentLoaded', function () {
+                showFullscreenAlert();
+            });
+        </script>
+
+    </body>
+    </html>
+}
+else
+{
+    <div class="wrapper">
+        <div class="content-wrapper">
+            <section class="content">
+                <div class="container-fluid">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <label class="card-title">Quản lý giấy tờ </label>
+                                    <button type="button" class="btn btn-primary" style="margin-left:70%" data-toggle="modal" data-target="#addGiayToModal">
+                                        Thêm giấy tờ
+                                    </button>
+                                </div>
+                                <div class="card-body">
+                                    <!-- Bảng hiển thị hãng -->
+                                    <table id="brandTable" class="table table-bordered table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>STT</th>
+                                                <th>Số giấy</th>
+                                                <th>Tình trạng</th>
+                                                <th>Đơn vị</th>
+                                                <th>Hành động</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var item in Model)
+                                            {
+                                                <tr>
+                                                    <td>@item.Magiayto</td>
+                                                    <td>@item.Sogiay</td>
+                                                    @if (item.Tinhtrang)
+                                                    {
+                                                        <td> Tốt </td>
+                                                    }
+                                                    else{
+                                                        <td> Hỏng </td>
+                                                    }
+                                                    <td>
+                                                        @ChonDonVi.FirstOrDefault(c => c.Madv == item.Madv)?.Tendv
+                                                    </td>
+                                                    <td>
+                                                        <a class="btn btn-success" onclick="MoSuaGiayTo('@item.Magiayto', '@item.Sogiay', '@item.Tinhtrang', '@item.Madv')">Edit</a>
+                                                        <a class="btn btn-danger" onclick="XoaGiayTo(@item.Magiayto)">Delete</a>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+    <div class="modal fade" id="addGiayToModal" tabindex="-1" role="dialog" aria-labelledby="addGiayToModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <form id="frmThemGiayTo" method="post" enctype="multipart/form-data">
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label for="exampleInputPassword1">Nhập Số giấy tờ</label>
+                            <input type="text" class="form-control" id="sogiay" placeholder="Nhập số giấy tờ mới tại đây">
+
+                           
+                            <label for="exampleInputPassword1">Chọn đơn vị của giấy tờ</label>
+
+                            <select class="form-control" id="madv">
+                                <option style="display:none" value=""></option>
+                                @if (ChonDonVi != null)
+                                {
+                                    @foreach (var item in ChonDonVi)
+                                    {
+                                        <option value="@item.Madv">@item.Tendv</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="card-footer">
+                            <button type="submit" class="btn btn-primary" id="confirm">Thêm giấy tờ</button>
+                            <button type="button" class="btn btn-default" data-dismiss="modal" id="cancel">Hủy bỏ</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Xác Nhận Xóa -->
+    <div class="modal fade" id="confirmDeleteModal" tabindex="-1" role="dialog" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Xác Nhận Xóa</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Đóng">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    Bạn có chắc chắn muốn xóa giấy tờ này?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteButton">Xóa</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Modal Sửa Giấy Tờ -->
+    <div class="modal fade" id="editGiayToModal" tabindex="-1" role="dialog" aria-labelledby="editGiayToModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <form id="frmSuaGiayTo" method="post">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="editGiayToModalLabel">Sửa Giấy Tờ</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="editSoGiay">Số giấy:</label>
+                            <input type="text" class="form-control" id="editSoGiay" placeholder="Nhập số giấy">
+                        </div>
+                        <div class="form-group">
+                            <label for="editLoai">Tình trạng:</label>
+                            <input type="text" class="form-control" id="editLoai" placeholder="Nhập loại giấy">
+                        </div>
+                        <div class="form-group">
+                            <label for="editDonVi">Đơn vị:</label>
+                            <select class="form-control" id="editDonVi">
+                                <option style="display:none" value="">Chọn đơn vị</option>
+                                @if (ChonDonVi != null)
+                                {
+                                    @foreach (var item in ChonDonVi)
+                                    {
+                                        <option value="@item.Madv">@item.Tendv</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy bỏ</button>
+                        <button type="button" class="btn btn-primary" id="confirmEditButton">Lưu</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script src="~/new/jquery-3.6.0.min.js"></script>
+
+    <!-- Bao gồm DataTables sau -->
+    <script src="~/Admin/plugins/datatables/jquery.dataTables.min.js"></script>
+
+    <script>
+                // Khởi tạo DataTable
+                   $('#brandTable').DataTable({
+                       "paging": true,
+                       "ordering": true,
+                       "info": true,
+                       "searching": true,
+                       "language": {
+                           "paginate": { "next": "Trang sau", "previous": "Trang trước" },
+                           "info": "Hiển thị từ _START_ đến _END_ của _TOTAL_ giấy tờ",
+                           "search": "Tìm kiếm:"
+                       }
+                   });
+               $(document).ready(function () {
+
+
+                   // Xử lý sự kiện submit của form Thêm cấp bậc
+                   $('#frmThemGiayTo').on('submit', function (e) {
+                       e.preventDefault(); // Ngăn chặn hành vi submit mặc định 
+                       var sogiay = parseInt($('#sogiay').val());
+                       var madv = parseInt($('#madv').val());
+
+                       if ((typeof sogiay !== 'number' || !Number.isInteger(sogiay)) || (typeof madv !== 'number' || !Number.isInteger(madv))) {
+                           alert("Bạn chưa nhập đủ thông tin giấy tờ.");
+                           return;
+                       }
+
+                       $.ajax({
+                          url: '/Admin/ThemGiayTo', // Điều chỉnh URL nếu cần thiết
+                          data: {
+                                sogiay: sogiay,
+                              
+                                madv: madv
+                          },
+                          type: 'POST',
+                          dataType: 'json',
+                          success: function (res) {
+                               if (res.status === true) {
+                                   // Đóng modal sau khi thêm thành công
+                                   $('#addGiayToModal').modal('hide');
+                                   // Tải lại trang hoặc cập nhật DataTable
+                                  window.location = '@Url.Action("QuanLyGiayTo", "Admin")';
+                               } else {
+                                   alert("Thêm giấy tờ thất bại. Vui lòng thử lại.");
+                               }
+                           },
+                           error: function () {
+                               alert("Đã xảy ra lỗi khi gửi yêu cầu. Vui lòng thử lại.");
+                           }
+                       });
+                   });
+
+                   // Xử lý sự kiện Xóa cấp bậc
+                   window.XoaGiayTo = function (macb) {
+                      var magiayto = parseInt(macb);
+
+                       // Hiển thị modal xác nhận xóa
+                       $('#confirmDeleteModal').modal('show');
+
+                       // Xử lý sự kiện khi người dùng xác nhận xóa
+                       $('#confirmDeleteButton').off('click').on('click', function () { // Sử dụng .off để tránh gắn nhiều sự kiện
+                           $.ajax({
+                               url: '/Admin/XoaGiayTo',
+                               data: {
+                                    magiayto: magiayto
+                               },
+                               type: 'POST',
+                               dataType: 'json',
+                               success: function (res) {
+                                   
+                                       // Đóng modal sau khi xóa thành công
+                                    $('#confirmDeleteModal').modal('hide');
+                                    window.location = '@Url.Action("QuanLyGiayTo", "Admin")';
+                                  
+                               },
+                               error: function () {
+                                   alert("Đã xảy ra lỗi khi gửi yêu cầu. Vui lòng thử lại.");
+                               }
+                           });
+                       });
+                   };
+
+
+               });
+                   // Mở modal sửa giấy tờ
+        function MoSuaGiayTo(magiayto, sogiay, loai, madv) {
+            // Điền thông tin vào modal
+            $('#editSoGiay').val(sogiay);
+            $('#editLoai').val(loai);
+            $('#editDonVi').val(madv);
+
+            // Gắn sự kiện lưu cho nút xác nhận
+            $('#confirmEditButton').off('click').on('click', function () {
+                var soGiay = $('#editSoGiay').val().trim();
+                var loaiGiay = $('#editLoai').val().trim();
+                var donVi = $('#editDonVi').val();
+
+                if (soGiay === "" || loaiGiay === "" || donVi === "") {
+                    alert("Bạn chưa nhập đủ thông tin.");
+                    return;
+                }
+
+                // Gửi yêu cầu AJAX để cập nhật giấy tờ
+                $.ajax({
+                    url: '/Admin/SuaGiayTo',
+                    type: 'POST',
+                    dataType: 'json',
+                    data: {
+                        magiayto: magiayto,
+                        sogiay: soGiay,
+                        tinhtrang: loaiGiay,
+                        madv: donVi
+                    },
+                    success: function (res) {
+                       
+                            $('#editGiayToModal').modal('hide');
+                            
+                            window.location.reload(); // Tải lại trang sau khi cập nhật
+                       
+                    },
+                    error: function () {
+                        alert("Đã xảy ra lỗi khi gửi yêu cầu. Vui lòng thử lại.");
+                    }
+                });
+            });
+
+            // Hiển thị modal
+            $('#editGiayToModal').modal('show');
+        }
+    </script>
+
+}
+<script src="~/Admin/plugins/jquery/jquery.min.js"></script>
+<!-- Bootstrap 4 -->
+<script src="~/Admin/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+<!-- DataTables & Plugins -->
+<link rel="stylesheet" href="~/Admin/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css">
+<link rel="stylesheet" href="~/Admin/plugins/datatables-responsive/css/responsive.bootstrap4.min.css">
+<script src="~/Admin/plugins/datatables/jquery.dataTables.min.js"></script>
+<script src="~/Admin/plugins/datatables-bs4/js/dataTables.bootstrap4.min.js"></script>
+<script src="~/Admin/plugins/datatables-responsive/js/dataTables.responsive.min.js"></script>
+<script src="~/Admin/plugins/datatables-responsive/js/responsive.bootstrap4.min.js"></script>
+
+<script src="~/Admin/dist/js/adminlte.min.js"></script>
