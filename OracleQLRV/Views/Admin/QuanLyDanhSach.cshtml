@@ -12,11 +12,11 @@
     List<Quannhan> hv = HttpContextAccessor.HttpContext.Session.GetJson<List<Quannhan>>("HV") ?? new List<Quannhan>();
     List<Rangoai> rn = HttpContextAccessor.HttpContext.Session.GetJson<List<Rangoai>>("RN") ?? new List<Rangoai>();
     var qh = data.FirstOrDefault(c => c.ActionName == "QuanLyDanhSach");
-    var dsdahoanthanh = ViewBag.pagedList5 as PagedList<DSRN>;
-    var dsdatuchoi = ViewBag.pagedList0 as PagedList<DSRN>;
-    var dschuapheduyet = ViewBag.pagedList1 as PagedList<DSRN>;
-    var dsdapheduyetc = ViewBag.pagedList2 as PagedList<DSRN>;
-    var dsdapheduyetd = ViewBag.pagedList3 as PagedList<DSRN>;
+    var dsdahoanthanh = ViewBag.pagedList5 as List<DSRN>;
+    var dsdatuchoi = ViewBag.pagedList0 as List<DSRN>;
+    var dschuapheduyet = ViewBag.pagedList1 as List<DSRN>;
+    var dsdapheduyetc = ViewBag.pagedList2 as List<DSRN>;
+    var dsdapheduyetd = ViewBag.pagedList3 as List<DSRN>;
 
 }
 
@@ -153,6 +153,7 @@ else
                                                         <th>Hình thức ra ngoài</th>
                                                         <th>Thời gian ra</th>
                                                         <th>Thời gian vào</th>
+                                                        <th>Hành động</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -177,10 +178,10 @@ else
 
                                                             <td>@item.ThoiGianRa</td>
                                                             <td>@item.ThoiGianVao</td>
-                                                            <td><a class="btn btn-success" id="PheDuyetC" data-maqn="@qh.MaQn">Phê duyệt</a></td>
-                                                            <td><a class="btn btn-success" id="TuChoiC" data-maqn="@qh.MaQn">Từ chối</a></td>
+                                                            <td><a class="btn btn-success" id="PheDuyetC" data-maqn="@qh.MaQn">Phê duyệt</a>
+                                                            <a class="btn btn-success" id="TuChoiC" data-maqn="@qh.MaQn">Từ chối</a>
 
-                                                            <td>
+                                                           
                                                                 <a class="btn btn-success" title="Delete" data-toggle="modal" onclick="Xoa(@item.MaCTDS)">Xóa</a>
                                                             </td>
                                                         </tr>
@@ -188,60 +189,7 @@ else
                                                 </tbody>
 
                                             </table>
-                                            <div class="row">
-                                                <div class="col-sm-12 col-md-5">
-                                                    <div class="dataTables_info" id="example1_info" role="status" aria-live="polite">
-                                                        Danh sách từ @dschuapheduyet.FirstItemOnPage đến @dschuapheduyet.LastItemOnPage  trên tổng số @dschuapheduyet.TotalItemCount quân nhân
-                                                    </div>
-                                                </div>
-                                                <ul class="pagination">
-
-                                                    @if (dschuapheduyet.HasPreviousPage)
-                                                    {
-                                                        <li class="page-item">
-                                                            <a class="page-link" href="@Url.Action("QuanLyDanhSach", new { page = dschuapheduyet.PageNumber - 1 })">Previous</a>
-                                                        </li>
-
-                                                    }
-                                                    <li class="page-item  @(1 == dschuapheduyet.PageNumber ? "active" : "")">
-                                                        <a class="page-link" href="@Url.Action("QuanLyDanhSach", new { page = 1 })">1</a>
-                                                    </li>
-                                                    @if (dschuapheduyet.PageNumber > 3)
-                                                    {
-                                                        <li class="page-item">
-                                                            <span class="page-link">...</span>
-                                                        </li>
-                                                    }
-                                                    @for (int i = dschuapheduyet.PageNumber - 1; i <= dschuapheduyet.PageNumber + 1; i++)
-                                                    {
-                                                        if (i > 1 && i < dschuapheduyet.PageCount)
-                                                        {
-                                                            <li class="page-item @(i == dschuapheduyet.PageNumber ? "active" : "")">
-                                                                <a class="page-link" href="@Url.Action("QuanLyDanhSach", new { page = i })">@i</a>
-                                                            </li>
-                                                        }
-                                                    }
-                                                    @if (dschuapheduyet.PageNumber < dschuapheduyet.PageCount - 1)
-                                                    {
-                                                        <li class="page-item">
-                                                            <span class="page-link">...</span>
-                                                        </li>
-                                                    }
-                                                    @if (dschuapheduyet.PageCount > 1)
-                                                    {
-                                                        <li class="page-item  @(dschuapheduyet.PageCount == dschuapheduyet.PageNumber ? "active" : "")">
-                                                            <a class="page-link" href="@Url.Action("QuanLyDanhSach", new { page = dschuapheduyet.PageCount })">@dschuapheduyet.PageCount</a>
-                                                        </li>
-                                                    }
-                                                    @if (dschuapheduyet.HasNextPage)
-                                                    {
-
-                                                        <li class="page-item">
-                                                            <a class="page-link" href="@Url.Action("QuanLyDanhSach", new { page = dschuapheduyet.PageNumber + 1 })">Next</a>
-                                                        </li>
-                                                    }
-                                                </ul>
-                                            </div>
+                                           
                                             <button type="button" class="btn btn-default" data-toggle="modal" data-target="#themdanhsach">Thêm danh sách</button>
                                             <Button class="btn btn-success" id="AllC" data-maqn="@qh.MaQn">Phê duyệt tất cả</Button>
                                             <Button class="btn btn-success" id="AllTC" data-maqn="@qh.MaQn">Từ chối tất cả</Button>
@@ -516,60 +464,7 @@ else
                                                 </tbody>
 
                                             </table>
-                                            <div class="row">
-                                                <div class="col-sm-12 col-md-5">
-                                                    <div class="dataTables_info" id="example1_info" role="status" aria-live="polite">
-                                                        Danh sách từ @dsdapheduyetc.FirstItemOnPage đến @dsdapheduyetc.LastItemOnPage  trên tổng số @dsdapheduyetc.TotalItemCount quân nhân
-                                                    </div>
-                                                </div>
-                                                <ul class="pagination">
-
-                                                    @if (dsdapheduyetc.HasPreviousPage)
-                                                    {
-                                                        <li class="page-item">
-                                                            <a class="page-link" href="@Url.Action("QuanLyDanhSach", new { page = dsdapheduyetc.PageNumber - 1 })">Previous</a>
-                                                        </li>
-
-                                                    }
-                                                    <li class="page-item  @(1 == dsdapheduyetc.PageNumber ? "active" : "")">
-                                                        <a class="page-link" href="@Url.Action("QuanLyDanhSach", new { page = 1 })">1</a>
-                                                    </li>
-                                                    @if (dsdapheduyetc.PageNumber > 3)
-                                                    {
-                                                        <li class="page-item">
-                                                            <span class="page-link">...</span>
-                                                        </li>
-                                                    }
-                                                    @for (int i = dsdapheduyetc.PageNumber - 1; i <= dsdapheduyetc.PageNumber + 1; i++)
-                                                    {
-                                                        if (i > 1 && i < dsdapheduyetc.PageCount)
-                                                        {
-                                                            <li class="page-item @(i == dsdapheduyetc.PageNumber ? "active" : "")">
-                                                                <a class="page-link" href="@Url.Action("QuanLyDanhSach", new { page = i })">@i</a>
-                                                            </li>
-                                                        }
-                                                    }
-                                                    @if (dsdapheduyetc.PageNumber < dsdapheduyetc.PageCount - 1)
-                                                    {
-                                                        <li class="page-item">
-                                                            <span class="page-link">...</span>
-                                                        </li>
-                                                    }
-                                                    @if (dsdapheduyetc.PageCount > 1)
-                                                    {
-                                                        <li class="page-item  @(dsdapheduyetc.PageCount == dsdapheduyetc.PageNumber ? "active" : "")">
-                                                            <a class="page-link" href="@Url.Action("QuanLyDanhSach", new { page = dsdapheduyetc.PageCount })">@dsdapheduyetc.PageCount</a>
-                                                        </li>
-                                                    }
-                                                    @if (dsdapheduyetc.HasNextPage)
-                                                    {
-
-                                                        <li class="page-item">
-                                                            <a class="page-link" href="@Url.Action("QuanLyDanhSach", new { page = dsdapheduyetc.PageNumber + 1 })">Next</a>
-                                                        </li>
-                                                    }
-                                                </ul>
-                                            </div>
+                                            
                                             @if (qh.MaCv == 1 || qh.MaCv == 3)
                                             {
                                                 <Button class="btn btn-success" id="AllD" data-maqn="@qh.MaQn">Phê duyệt tất cả</Button>
@@ -716,60 +611,7 @@ else
                                                 </tbody>
 
                                             </table>
-                                            <div class="row">
-                                                <div class="col-sm-12 col-md-5">
-                                                    <div class="dataTables_info" id="example1_info" role="status" aria-live="polite">
-                                                        Danh sách từ @dsdapheduyetd.FirstItemOnPage đến @dsdapheduyetd.LastItemOnPage  trên tổng số @dsdapheduyetd.TotalItemCount quân nhân
-                                                    </div>
-                                                </div>
-                                                <ul class="pagination">
-
-                                                    @if (dsdapheduyetd.HasPreviousPage)
-                                                    {
-                                                        <li class="page-item">
-                                                            <a class="page-link" href="@Url.Action("QuanLyDanhSach", new { page = dsdapheduyetd.PageNumber - 1 })">Previous</a>
-                                                        </li>
-
-                                                    }
-                                                    <li class="page-item  @(1 == dsdapheduyetd.PageNumber ? "active" : "")">
-                                                        <a class="page-link" href="@Url.Action("QuanLyDanhSach", new { page = 1 })">1</a>
-                                                    </li>
-                                                    @if (dsdapheduyetd.PageNumber > 3)
-                                                    {
-                                                        <li class="page-item">
-                                                            <span class="page-link">...</span>
-                                                        </li>
-                                                    }
-                                                    @for (int i = dsdapheduyetd.PageNumber - 1; i <= dsdapheduyetd.PageNumber + 1; i++)
-                                                    {
-                                                        if (i > 1 && i < dsdapheduyetd.PageCount)
-                                                        {
-                                                            <li class="page-item @(i == dsdapheduyetd.PageNumber ? "active" : "")">
-                                                                <a class="page-link" href="@Url.Action("QuanLyDanhSach", new { page = i })">@i</a>
-                                                            </li>
-                                                        }
-                                                    }
-                                                    @if (dsdapheduyetd.PageNumber < dsdapheduyetd.PageCount - 1)
-                                                    {
-                                                        <li class="page-item">
-                                                            <span class="page-link">...</span>
-                                                        </li>
-                                                    }
-                                                    @if (dsdapheduyetd.PageCount > 1)
-                                                    {
-                                                        <li class="page-item  @(dsdapheduyetd.PageCount == dsdapheduyetd.PageNumber ? "active" : "")">
-                                                            <a class="page-link" href="@Url.Action("QuanLyDanhSach", new { page = dsdapheduyetd.PageCount })">@dsdapheduyetd.PageCount</a>
-                                                        </li>
-                                                    }
-                                                    @if (dsdapheduyetd.HasNextPage)
-                                                    {
-
-                                                        <li class="page-item">
-                                                            <a class="page-link" href="@Url.Action("QuanLyDanhSach", new { page = dsdapheduyetd.PageNumber + 1 })">Next</a>
-                                                        </li>
-                                                    }
-                                                </ul>
-                                            </div>
+                                            
                                         </div>
                                         <div class="modal fade" id="tragiay">
                                             <div class="modal-dialog">
@@ -1052,60 +894,7 @@ else
                                                 </tbody>
 
                                             </table>
-                                            <div class="row">
-                                                <div class="col-sm-12 col-md-5">
-                                                    <div class="dataTables_info" id="example1_info" role="status" aria-live="polite">
-                                                        Danh sách từ @dsdahoanthanh.FirstItemOnPage đến @dsdahoanthanh.LastItemOnPage  trên tổng số @dsdahoanthanh.TotalItemCount quân nhân
-                                                    </div>
-                                                </div>
-                                                <ul class="pagination">
-
-                                                    @if (dsdahoanthanh.HasPreviousPage)
-                                                    {
-                                                        <li class="page-item">
-                                                            <a class="page-link" href="@Url.Action("QuanLyDanhSach", new { page = dsdahoanthanh.PageNumber - 1 })">Previous</a>
-                                                        </li>
-
-                                                    }
-                                                    <li class="page-item  @(1 == dsdahoanthanh.PageNumber ? "active" : "")">
-                                                        <a class="page-link" href="@Url.Action("QuanLyDanhSach", new { page = 1 })">1</a>
-                                                    </li>
-                                                    @if (dsdahoanthanh.PageNumber > 3)
-                                                    {
-                                                        <li class="page-item">
-                                                            <span class="page-link">...</span>
-                                                        </li>
-                                                    }
-                                                    @for (int i = dsdahoanthanh.PageNumber - 1; i <= dsdahoanthanh.PageNumber + 1; i++)
-                                                    {
-                                                        if (i > 1 && i < dsdahoanthanh.PageCount)
-                                                        {
-                                                            <li class="page-item @(i == dsdahoanthanh.PageNumber ? "active" : "")">
-                                                                <a class="page-link" href="@Url.Action("QuanLyDanhSach", new { page = i })">@i</a>
-                                                            </li>
-                                                        }
-                                                    }
-                                                    @if (dsdahoanthanh.PageNumber < dsdahoanthanh.PageCount - 1)
-                                                    {
-                                                        <li class="page-item">
-                                                            <span class="page-link">...</span>
-                                                        </li>
-                                                    }
-                                                    @if (dsdahoanthanh.PageCount > 1)
-                                                    {
-                                                        <li class="page-item  @(dsdahoanthanh.PageCount == dsdahoanthanh.PageNumber ? "active" : "")">
-                                                            <a class="page-link" href="@Url.Action("QuanLyDanhSach", new { page = dsdahoanthanh.PageCount })">@dsdahoanthanh.PageCount</a>
-                                                        </li>
-                                                    }
-                                                    @if (dsdahoanthanh.HasNextPage)
-                                                    {
-
-                                                        <li class="page-item">
-                                                            <a class="page-link" href="@Url.Action("QuanLyDanhSach", new { page = dsdahoanthanh.PageNumber + 1 })">Next</a>
-                                                        </li>
-                                                    }
-                                                </ul>
-                                            </div>
+                                            
                                         </div>
                                         @*  <div class="modal fade" id="chitiet">
                                             <div class="modal-dialog">
@@ -1215,60 +1004,7 @@ else
                                                 </tbody>
 
                                             </table>
-                                            <div class="row">
-                                                <div class="col-sm-12 col-md-5">
-                                                    <div class="dataTables_info" id="example1_info" role="status" aria-live="polite">
-                                                        Danh sách từ @dsdahoanthanh.FirstItemOnPage đến @dsdahoanthanh.LastItemOnPage  trên tổng số @dsdahoanthanh.TotalItemCount quân nhân
-                                                    </div>
-                                                </div>
-                                                <ul class="pagination">
-
-                                                    @if (dsdatuchoi.HasPreviousPage)
-                                                    {
-                                                        <li class="page-item">
-                                                            <a class="page-link" href="@Url.Action("QuanLyDanhSach", new { page = dsdatuchoi.PageNumber - 1 })">Previous</a>
-                                                        </li>
-
-                                                    }
-                                                    <li class="page-item  @(1 == dsdatuchoi.PageNumber ? "active" : "")">
-                                                        <a class="page-link" href="@Url.Action("QuanLyDanhSach", new { page = 1 })">1</a>
-                                                    </li>
-                                                    @if (dsdatuchoi.PageNumber > 3)
-                                                    {
-                                                        <li class="page-item">
-                                                            <span class="page-link">...</span>
-                                                        </li>
-                                                    }
-                                                    @for (int i = dsdatuchoi.PageNumber - 1; i <= dsdatuchoi.PageNumber + 1; i++)
-                                                    {
-                                                        if (i > 1 && i < dsdatuchoi.PageCount)
-                                                        {
-                                                            <li class="page-item @(i == dsdatuchoi.PageNumber ? "active" : "")">
-                                                                <a class="page-link" href="@Url.Action("QuanLyDanhSach", new { page = i })">@i</a>
-                                                            </li>
-                                                        }
-                                                    }
-                                                    @if (dsdatuchoi.PageNumber < dsdatuchoi.PageCount - 1)
-                                                    {
-                                                        <li class="page-item">
-                                                            <span class="page-link">...</span>
-                                                        </li>
-                                                    }
-                                                    @if (dsdatuchoi.PageCount > 1)
-                                                    {
-                                                        <li class="page-item  @(dsdatuchoi.PageCount == dsdatuchoi.PageNumber ? "active" : "")">
-                                                            <a class="page-link" href="@Url.Action("QuanLyDanhSach", new { page = dsdatuchoi.PageCount })">@dsdatuchoi.PageCount</a>
-                                                        </li>
-                                                    }
-                                                    @if (dsdatuchoi.HasNextPage)
-                                                    {
-
-                                                        <li class="page-item">
-                                                            <a class="page-link" href="@Url.Action("QuanLyDanhSach", new { page = dsdatuchoi.PageNumber + 1 })">Next</a>
-                                                        </li>
-                                                    }
-                                                </ul>
-                                            </div>
+                                            
                                         </div>
                                     </div>
                                 </div>
@@ -1289,3 +1025,12 @@ else
 
     </div>
 }
+<script src="~/Admin/plugins/jquery/jquery.min.js"></script>
+<script src="~/Admin/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+<link rel="stylesheet" href="~/Admin/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css">
+<link rel="stylesheet" href="~/Admin/plugins/datatables-responsive/css/responsive.bootstrap4.min.css">
+<script src="~/Admin/plugins/datatables/jquery.dataTables.min.js"></script>
+<script src="~/Admin/plugins/datatables-bs4/js/dataTables.bootstrap4.min.js"></script>
+<script src="~/Admin/plugins/datatables-responsive/js/dataTables.responsive.min.js"></script>
+<script src="~/Admin/plugins/datatables-responsive/js/responsive.bootstrap4.min.js"></script>
+<script src="~/Admin/dist/js/adminlte.min.js"></script>

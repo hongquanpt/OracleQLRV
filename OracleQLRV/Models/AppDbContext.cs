@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace OracleQLRV.Models;
 
@@ -208,7 +209,12 @@ public partial class AppDbContext : DbContext
                 .HasColumnName("SOGIAY");
             entity.Property(e => e.Tinhtrang)
                 .HasColumnType("NUMBER(1)")
-                .HasColumnName("TINHTRANG");
+                .HasColumnName("TINHTRANG")
+                  .HasConversion(
+            v => v ? 1 : 0,   
+            v => v == 1      
+        );
+
         });
 
         modelBuilder.Entity<Nhom>(entity =>

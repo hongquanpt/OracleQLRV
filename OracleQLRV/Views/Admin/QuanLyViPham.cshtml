@@ -315,12 +315,10 @@ else
                         type: 'POST',
                         dataType: 'json',
                         success: function (res) {
-                            if (res.status === true) {
+                          
                                 $('#confirmDeleteModal').modal('hide');
                                 window.location = '@Url.Action("QuanLyViPham", "Admin")';
-                            } else {
-                                alert("Xóa vi phạm thất bại. Vui lòng thử lại.");
-                            }
+                           
                         },
                         error: function () {
                             alert("Đã xảy ra lỗi khi gửi yêu cầu. Vui lòng thử lại.");

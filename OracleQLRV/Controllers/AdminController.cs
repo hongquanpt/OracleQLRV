@@ -742,7 +742,7 @@ namespace OracleQLRV.Controllers
         #endregion
 
         #region Quản lý danh sách     
-        public IActionResult QuanLyDanhSach(int page = 1, int pageSize = 5)
+        public IActionResult QuanLyDanhSach()
         {
 
             var query = from ct in obj.Chitietdanhsaches
@@ -779,23 +779,15 @@ namespace OracleQLRV.Controllers
             var tinhTrang3 = query.Where(o => o.TinhTrang == 3).OrderBy(o => o.MaCTDS).ToList();
             var tinhTrang4 = query.Where(o => o.TinhTrang == 4).OrderBy(o => o.MaCTDS).ToList();
 
-            // Tạo danh sách phân trang cho từng tình trạng
-            var pagedList5 = tinhTrang5.ToPagedList(page, pageSize);
-            var pagedList0 = tinhTrang0.ToPagedList(page, pageSize);
-            var pagedList1 = tinhTrang1.ToPagedList(page, pageSize);
-            var pagedList2 = tinhTrang2.ToPagedList(page, pageSize);
-            var pagedList3 = tinhTrang3.ToPagedList(page, pageSize);
-            var pagedList4 = tinhTrang4.ToPagedList(page, pageSize);
+            
            
-            ViewBag.pagedList5 = pagedList5;
-            ViewBag.pagedList0 = pagedList0;
-            ViewBag.pagedList1 = pagedList1;
-            ViewBag.pagedList2 = pagedList2;
-            ViewBag.pagedList3 = pagedList3;
-            ViewBag.pagedList4 = pagedList4;
-            ViewBag.PageStartItem = (page - 1) * pageSize + 1;
-            ViewBag.PageEndItem = Math.Min(page * pageSize, pagedList5.TotalItemCount);
-            ViewBag.Page = page;
+            ViewBag.pagedList5 = tinhTrang5;
+            ViewBag.pagedList0 = tinhTrang0;
+            ViewBag.pagedList1 = tinhTrang1;
+            ViewBag.pagedList2 = tinhTrang2;
+            ViewBag.pagedList3 = tinhTrang3;
+            ViewBag.pagedList4 = tinhTrang4;
+            
 
             int totalOrders = obj.Chitietdanhsaches.Count(o => o.Tinhtrang == 4);
             int unpaidOrdersCount = obj.Chitietdanhsaches.Count(o => o.Tinhtrang == 0);
@@ -1634,86 +1626,129 @@ namespace OracleQLRV.Controllers
         }
 
         [HttpPost]
-        public ActionResult ThemViPham(string mota,  DateTime thoigian, string ghichu, int mahv)
+        public ActionResult ThemViPham(string mota, DateTime thoigian, string ghichu, int mahv)
         {
-            var moi = new Models.Vipham();
-            moi.Mota = mota;
-           
-            moi.Thoigian = thoigian;
-            moi.Ghichu = ghichu;
-            moi.Mahv = mahv;
-            obj.Viphams.Add(moi);
-            obj.SaveChanges();
-            return Json(new
+            using (var connection = obj.Database.GetDbConnection())
             {
-                status = true
-            });
-        }
-        public IActionResult XoaViPham(int mavp)
-        {
-            var vipham = obj.Viphams.Find(mavp);
-            if (vipham != null)
-            {
-                obj.Viphams.Remove(vipham);
-                obj.SaveChanges();
-                return Json(new
+                connection.Open();
+                using (var command = connection.CreateCommand())
                 {
-                    status = true
-                });
-            }
-            else
-            {
-                return Json(new
-                {
-                    status = false
-                });
+                    command.CommandText = "SP_InsertVipham";
+                    command.CommandType = CommandType.StoredProcedure;
+
+                    var pMota = new Oracle.ManagedDataAccess.Client.OracleParameter("p_mota", Oracle.ManagedDataAccess.Client.OracleDbType.Varchar2, mota, System.Data.ParameterDirection.Input);
+                    var pThoigian = new Oracle.ManagedDataAccess.Client.OracleParameter("p_thoigian", Oracle.ManagedDataAccess.Client.OracleDbType.Date, thoigian, System.Data.ParameterDirection.Input);
+                    var pGhichu = new Oracle.ManagedDataAccess.Client.OracleParameter("p_ghichu", Oracle.ManagedDataAccess.Client.OracleDbType.Varchar2, ghichu, System.Data.ParameterDirection.Input);
+                    var pMahv = new Oracle.ManagedDataAccess.Client.OracleParameter("p_mahv", Oracle.ManagedDataAccess.Client.OracleDbType.Int32, mahv, System.Data.ParameterDirection.Input);
+
+                    command.Parameters.Add(pMota);
+                    command.Parameters.Add(pThoigian);
+                    command.Parameters.Add(pGhichu);
+                    command.Parameters.Add(pMahv);
+
+                    command.ExecuteNonQuery();
+                }
             }
 
+            return Json(new { status = true });
         }
+
+        public IActionResult XoaViPham(int mavp)
+        {
+            using (var connection = obj.Database.GetDbConnection())
+            {
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    command.CommandText = "SP_DeleteVipham";
+                    command.CommandType = CommandType.StoredProcedure;
+
+                    var pMavp = new Oracle.ManagedDataAccess.Client.OracleParameter("p_mavp", Oracle.ManagedDataAccess.Client.OracleDbType.Int32, mavp, System.Data.ParameterDirection.Input);
+                    command.Parameters.Add(pMavp);
+
+                    int rowsAffected = command.ExecuteNonQuery();
+                    return Json(new { status = (rowsAffected > 0) });
+                }
+            }
+        }
+
 
         public IActionResult SuaViPham(int mavp)
         {
-            var model = obj.Viphams.Find(mavp);
-            ViewBag.ChonQuanNhan = (obj.Quannhans.ToList());
+            Models.Vipham model = null;
+
+            using (var connection = obj.Database.GetDbConnection())
+            {
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    command.CommandText = "SP_GetViphamById";
+                    command.CommandType = CommandType.StoredProcedure;
+
+                    var pMavp = new Oracle.ManagedDataAccess.Client.OracleParameter("p_mavp", Oracle.ManagedDataAccess.Client.OracleDbType.Int32, mavp, System.Data.ParameterDirection.Input);
+                    var pRefCursor = new Oracle.ManagedDataAccess.Client.OracleParameter("p_refCursor", Oracle.ManagedDataAccess.Client.OracleDbType.RefCursor, System.Data.ParameterDirection.Output);
+
+                    command.Parameters.Add(pMavp);
+                    command.Parameters.Add(pRefCursor);
+
+                    using (var reader = command.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            model = new Models.Vipham
+                            {
+                                Mavp = reader.GetInt32(reader.GetOrdinal("Mavp")),
+                                Mota = reader.GetString(reader.GetOrdinal("Mota")),
+                                Thoigian = reader.GetDateTime(reader.GetOrdinal("Thoigian")),
+                                Ghichu = reader.IsDBNull(reader.GetOrdinal("Ghichu")) ? null : reader.GetString(reader.GetOrdinal("Ghichu")),
+                                Mahv = reader.GetInt32(reader.GetOrdinal("Mahv"))
+                            };
+                        }
+                    }
+                }
+            }
+
+            ViewBag.ChonQuanNhan = obj.Quannhans.ToList();
 
             if (model != null)
             {
-
                 return View(model);
             }
             else
             {
-                return Json(new
-                {
-                    status = false
-                });
+                return Json(new { status = false });
             }
         }
+
         [HttpPost]
-        public IActionResult SuaViPham(int mavp, string mota,  DateTime thoigian, string ghichu, int mahv)
+        public IActionResult SuaViPham(int mavp, string mota, DateTime thoigian, string ghichu, int mahv)
         {
-            var vipham = obj.Viphams.Find(mavp);
-            if (vipham != null)
+            using (var connection = obj.Database.GetDbConnection())
             {
-                vipham.Mota = mota;
-              
-                vipham.Thoigian = thoigian;
-                vipham.Ghichu = ghichu;
-                vipham.Mahv = mahv;
-                obj.SaveChanges();
-                return Json(new
+                connection.Open();
+                using (var command = connection.CreateCommand())
                 {
-                    status = true
-                });
-            }
-            else
-            {
-                return Json(new
-                {
-                    status = false
-                });
+                    command.CommandText = "SP_UpdateVipham";
+                    command.CommandType = CommandType.StoredProcedure;
+
+                    var pMavp = new Oracle.ManagedDataAccess.Client.OracleParameter("p_mavp", Oracle.ManagedDataAccess.Client.OracleDbType.Int32, mavp, System.Data.ParameterDirection.Input);
+                    var pMota = new Oracle.ManagedDataAccess.Client.OracleParameter("p_mota", Oracle.ManagedDataAccess.Client.OracleDbType.Varchar2, mota, System.Data.ParameterDirection.Input);
+                    var pThoigian = new Oracle.ManagedDataAccess.Client.OracleParameter("p_thoigian", Oracle.ManagedDataAccess.Client.OracleDbType.Date, thoigian, System.Data.ParameterDirection.Input);
+                    var pGhichu = new Oracle.ManagedDataAccess.Client.OracleParameter("p_ghichu", Oracle.ManagedDataAccess.Client.OracleDbType.Varchar2, ghichu, System.Data.ParameterDirection.Input);
+                    var pMahv = new Oracle.ManagedDataAccess.Client.OracleParameter("p_mahv", Oracle.ManagedDataAccess.Client.OracleDbType.Int32, mahv, System.Data.ParameterDirection.Input);
+
+                    command.Parameters.Add(pMavp);
+                    command.Parameters.Add(pMota);
+                    command.Parameters.Add(pThoigian);
+                    command.Parameters.Add(pGhichu);
+                    command.Parameters.Add(pMahv);
+
+                    int rowsAffected = command.ExecuteNonQuery();
+                    return Json(new { status = (rowsAffected > 0) });
+                }
             }
         }
+
         #endregion
 
         #region Lịch sử ra ngoài
