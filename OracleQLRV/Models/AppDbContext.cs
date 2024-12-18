@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace OracleQLRV.Models;
 
@@ -29,6 +28,8 @@ public partial class AppDbContext : DbContext
     public virtual DbSet<Donvi> Donvis { get; set; }
 
     public virtual DbSet<Giayto> Giaytos { get; set; }
+
+    public virtual DbSet<LichSuJson> LichSuJsons { get; set; }
 
     public virtual DbSet<Nhom> Nhoms { get; set; }
 
@@ -103,7 +104,6 @@ public partial class AppDbContext : DbContext
 
             entity.Property(e => e.Mactds)
                 .HasPrecision(10)
-                .ValueGeneratedNever()
                 .HasColumnName("MACTDS");
             entity.Property(e => e.Diadiem)
                 .HasMaxLength(100)
@@ -142,6 +142,7 @@ public partial class AppDbContext : DbContext
                 .HasColumnName("MAGIAYTO");
             entity.Property(e => e.Mactds)
                 .HasPrecision(10)
+                .ValueGeneratedOnAdd()
                 .HasColumnName("MACTDS");
             entity.Property(e => e.Ghichu)
                 .HasMaxLength(200)
@@ -210,11 +211,24 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.Tinhtrang)
                 .HasColumnType("NUMBER(1)")
                 .HasColumnName("TINHTRANG")
-                  .HasConversion(
-            v => v ? 1 : 0,   
-            v => v == 1      
-        );
+                .HasConversion(
+                    v => v ? 1 : 0, // Convert bool to number
+                    v => v == 1     // Convert number to bool
+                );
+        });
 
+        modelBuilder.Entity<LichSuJson>(entity =>
+        {
+            entity.HasKey(e => e.Mactds).HasName("SYS_C0020563");
+
+            entity.ToTable("LICH_SU_JSON");
+
+            entity.Property(e => e.Mactds)
+                .HasColumnType("NUMBER")
+                .HasColumnName("MACTDS");
+            entity.Property(e => e.JsonData)
+                .HasColumnType("CLOB")
+                .HasColumnName("JSON_DATA");
         });
 
         modelBuilder.Entity<Nhom>(entity =>

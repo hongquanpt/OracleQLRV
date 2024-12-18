@@ -145,14 +145,12 @@ else
                                                     <tr>
                                                         <th>Mã CTDS</th>
                                                         <th>Họ tên</th>
-                                                        <th>Chức vụ</th>
-                                                        <th>Cấp bậc</th>
+                                                       
                                                         <th>Đơn vị</th>
                                                         <th>Lý do ra ngoài</th>
                                                         <th>Địa điểm</th>
                                                         <th>Hình thức ra ngoài</th>
-                                                        <th>Thời gian ra</th>
-                                                        <th>Thời gian vào</th>
+                                                        
                                                         <th>Hành động</th>
                                                     </tr>
                                                 </thead>
@@ -162,8 +160,7 @@ else
                                                         <tr>
                                                             <td>@item.MaCTDS</td>
                                                             <td>@item.HoTen</td>
-                                                            <td>@item.TenCv</td>
-                                                            <td>@item.CapBac1</td>
+                                                           
                                                             <td>@item.TenDv</td>
                                                             <td>@item.LyDo</td>
                                                             <td>@item.DiaDiem</td>
@@ -176,13 +173,27 @@ else
                                                                 <td>Đi ra ngoài</td>
                                                             }
 
-                                                            <td>@item.ThoiGianRa</td>
-                                                            <td>@item.ThoiGianVao</td>
-                                                            <td><a class="btn btn-success" id="PheDuyetC" data-maqn="@qh.MaQn">Phê duyệt</a>
-                                                            <a class="btn btn-success" id="TuChoiC" data-maqn="@qh.MaQn">Từ chối</a>
+                                                            
+                                                            <td>
+                                                                <!-- Nút xem chi tiết -->
+                                                                <button class="btn btn-primary"
+                                                                        data-mactds="@item.MaCTDS"
+                                                                        data-hotencn="@item.HoTen"
+                                                                        data-tencv="@item.TenCv"
+                                                                        data-capbac="@item.CapBac1"
+                                                                        data-tendv="@item.TenDv"
+                                                                        data-lydo="@item.LyDo"
+                                                                        data-diadiem="@item.DiaDiem"
+                                                                        data-hinhthuc="@(item.HinhThucRn == 1 ? "Đi tranh thủ" : "Đi ra ngoài")"
+                                                                        data-thoigianra="@item.ThoiGianRa"
+                                                                        data-thoigianvao="@item.ThoiGianVao">
+                                                                    Xem chi tiết
+                                                                </button>
+                                                                <a class="btn btn-success" id="PheDuyetC" data-maqn="@qh.MaQn">Phê duyệt</a>
+                                                                <a class="btn btn-secondary" id="TuChoiC" data-maqn="@qh.MaQn">Từ chối</a>
 
-                                                           
-                                                                <a class="btn btn-success" title="Delete" data-toggle="modal" onclick="Xoa(@item.MaCTDS)">Xóa</a>
+
+                                                                <a class="btn btn-danger" title="Delete" data-toggle="modal" onclick="Xoa(@item.MaCTDS)">Xóa</a>
                                                             </td>
                                                         </tr>
                                                     }
@@ -305,6 +316,7 @@ else
 
 
                                             $(document).ready(function () {
+
                                                 $("#confirm5").click(function () {
                                                     var hocVien = $("#HocVien").val();
                                                     var hinhThuc = $("#HinhThuc").val();
@@ -420,14 +432,13 @@ else
                                                     <tr>
                                                         <th>Mã CTDS</th>
                                                         <th>Họ tên</th>
-                                                        <th>Chức vụ</th>
-                                                        <th>Cấp bậc</th>
+                                                        
                                                         <th>Đơn vị</th>
                                                         <th>Lý do ra ngoài</th>
                                                         <th>Địa điểm</th>
                                                         <th>Hình thức ra ngoài</th>
-                                                        <th>Thời gian ra</th>
-                                                        <th>Thời gian vào</th>
+                                                        <th>Hành động</th>
+                                                        
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -436,8 +447,7 @@ else
                                                         <tr>
                                                             <td>@item.MaCTDS</td>
                                                             <td>@item.HoTen</td>
-                                                            <td>@item.TenCv</td>
-                                                            <td>@item.CapBac1</td>
+                                                           
                                                             <td>@item.TenDv</td>
                                                             <td>@item.LyDo</td>
                                                             <td>@item.DiaDiem</td>
@@ -450,14 +460,28 @@ else
                                                                 <td>Đi ra ngoài</td>
                                                             }
 
-                                                            <td>@item.ThoiGianRa</td>
-                                                            <td>@item.ThoiGianVao</td>
-
-                                                            @if (qh.MaCv == 1 || qh.MaCv == 3)
-                                                            {
-                                                                <td><a class="btn btn-success" id="TuChoiD" data-maqn="@qh.MaQn">Từ chối</a></td>
-                                                                <td><a class="btn btn-success" id="PheDuyetD" data-maqn="@qh.MaQn">Phê duyệt</a></td>
-                                                            }
+                                                           
+                                                            <td>
+                                                                <button class="btn btn-info btn-sm btn-detail"
+                                                                        data-mactds="@item.MaCTDS"
+                                                                        data-hotencn="@item.HoTen"
+                                                                        data-tencv="@item.TenCv"
+                                                                        data-capbac="@item.CapBac1"
+                                                                        data-tendv="@item.TenDv"
+                                                                        data-lydo="@item.LyDo"
+                                                                        data-diadiem="@item.DiaDiem"
+                                                                        data-hinhthuc="@(item.HinhThucRn == 1 ? "Đi tranh thủ" : "Đi ra ngoài")"
+                                                                        data-thoigianra="@item.ThoiGianRa"
+                                                                        data-thoigianvao="@item.ThoiGianVao">
+                                                                    Xem chi tiết
+                                                                </button>
+                                                                @if (qh.MaCv == 1 || qh.MaCv == 3)
+                                                                {
+                                                                    <a class="btn btn-success" id="TuChoiD" data-maqn="@qh.MaQn">Từ chối</a>
+                                                                    <a class="btn btn-success" id="PheDuyetD" data-maqn="@qh.MaQn">Phê duyệt</a>
+                                                                }
+                                                            </td>
+                                                           
 
                                                         </tr>
                                                     }
@@ -535,19 +559,16 @@ else
                                             });
                                         </script>
                                         <div id="PDD" class="tab-pane fade">
-                                            <table id="example2" class="table table-bordered table-hover">
+                                            <table id="brandTable5" class="table table-bordered table-hover">
                                                 <thead>
                                                     <tr>
                                                         <th>Mã CTDS</th>
-                                                        <th>Họ tên</th>
-                                                        <th>Chức vụ</th>
-                                                        <th>Cấp bậc</th>
+                                                        <th>Họ tên</th>                                                    
                                                         <th>Đơn vị</th>
                                                         <th>Lý do ra ngoài</th>
                                                         <th>Địa điểm</th>
                                                         <th>Hình thức ra ngoài</th>
-                                                        <th>Thời gian ra</th>
-                                                        <th>Thời gian vào</th>
+                                                       <th>Hành động</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -556,8 +577,7 @@ else
                                                         <tr>
                                                             <td>@item.MaCTDS</td>
                                                             <td>@item.HoTen</td>
-                                                            <td>@item.TenCv</td>
-                                                            <td>@item.CapBac1</td>
+                                                          
                                                             <td>@item.TenDv</td>
                                                             <td>@item.LyDo</td>
                                                             <td>@item.DiaDiem</td>
@@ -570,41 +590,55 @@ else
                                                                 <td>Đi ra ngoài</td>
                                                             }
 
-                                                            <td>@item.ThoiGianRa</td>
-                                                            <td>@item.ThoiGianVao</td>
-
-                                                            @if (qh.MaCv == 1 || qh.MaCv == 2)
-                                                            {
-                                                                @if (ds.Any(c => c.MaCtds == item.MaCTDS && (c.DaTra == false || c.DaTra == null)))
+                                                          
+                                                            <td>
+                                                                <button class="btn btn-info btn-sm btn-detail"
+                                                                        data-mactds="@item.MaCTDS"
+                                                                        data-hotencn="@item.HoTen"
+                                                                        data-tencv="@item.TenCv"
+                                                                        data-capbac="@item.CapBac1"
+                                                                        data-tendv="@item.TenDv"
+                                                                        data-lydo="@item.LyDo"
+                                                                        data-diadiem="@item.DiaDiem"
+                                                                        data-hinhthuc="@(item.HinhThucRn == 1 ? "Đi tranh thủ" : "Đi ra ngoài")"
+                                                                        data-thoigianra="@item.ThoiGianRa"
+                                                                        data-thoigianvao="@item.ThoiGianVao">
+                                                                    Xem chi tiết
+                                                                </button>
+                                                                @if (qh.MaCv == 1 || qh.MaCv == 2)
                                                                 {
-                                                                    if ((rn.Where(c => c.Mactds == item.MaCTDS).FirstOrDefault() != null) && rn.Where(c => c.Mactds == item.MaCTDS).FirstOrDefault().Thoigianvao == null)
+                                                                    @if (ds.Any(c => c.MaCtds == item.MaCTDS && (c.DaTra == false || c.DaTra == null)))
                                                                     {
+                                                                        if ((rn.Where(c => c.Mactds == item.MaCTDS).FirstOrDefault() != null) && rn.Where(c => c.Mactds == item.MaCTDS).FirstOrDefault().Thoigianvao == null)
+                                                                        {
 
-                                                                        <td>
+                                                                   
                                                                             <button type="button" class="btn btn-default" data-toggle="modal" data-target="#tb">Trả giấy</button>
 
-                                                                        </td>
+                                                                
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                
+                                                                            <button type="button" class="btn btn-default" data-toggle="modal" data-id="@item.MaCTDS" data-magiay="@ds.First(c => c.MaCtds == item.MaCTDS).MaGiayTo" data-target="#tragiay">Trả giấy</button>
+
+                                                                    
+                                                                        }
+
                                                                     }
                                                                     else
                                                                     {
-                                                                        <td>
-                                                                            <button type="button" class="btn btn-default" data-toggle="modal" data-id="@item.MaCTDS" data-magiay="@ds.First(c => c.MaCtds == item.MaCTDS).MaGiayTo" data-target="#tragiay">Trả giấy</button>
 
-                                                                        </td>
-                                                                    }
-
-                                                                }
-                                                                else
-                                                                {
-
-                                                                    <td>
+                                                                  
                                                                         <button type="button" class="btn btn-default" data-toggle="modal" data-id="@item.MaCTDS" data-target="#capgiay">Cấp giấy</button>
 
-                                                                    </td>
+                                                                 
 
+                                                                    }
                                                                 }
-                                                            }
 
+                                                            </td>
+                                                          
 
                                                         </tr>
                                                     }
@@ -1024,6 +1058,79 @@ else
         </div>
 
     </div>
+    <!-- Modal xem chi tiết -->
+    <div class="modal fade" id="detailModal" tabindex="-1" role="dialog" aria-labelledby="detailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><b>Chi tiết</b></h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p><strong>Mã CTDS:</strong> <span id="md-mactds"></span></p>
+                    <p><strong>Họ tên:</strong> <span id="md-hotencn"></span></p>
+                    <p><strong>Chức vụ:</strong> <span id="md-tencv"></span></p>
+                    <p><strong>Cấp bậc:</strong> <span id="md-capbac"></span></p>
+                    <p><strong>Đơn vị:</strong> <span id="md-tendv"></span></p>
+                    <p><strong>Lý do ra ngoài:</strong> <span id="md-lydo"></span></p>
+                    <p><strong>Địa điểm:</strong> <span id="md-diadiem"></span></p>
+                    <p><strong>Hình thức ra ngoài:</strong> <span id="md-hinhthuc"></span></p>
+                    <p><strong>Thời gian ra:</strong> <span id="md-thoigianra"></span></p>
+                    <p><strong>Thời gian vào:</strong> <span id="md-thoigianvao"></span></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bao gồm thư viện jQuery -->
+    <script src="~/new/jquery-3.6.0.min.js"></script>
+
+    <!-- Bao gồm DataTables -->
+    <script src="~/Admin/plugins/datatables/jquery.dataTables.min.js"></script>
+    <script>
+         $('#example2, #brandTable2, #brandTable3, #brandTable4, #brandTable5').DataTable({
+            "paging": true,
+            "ordering": true,
+            "info": true,
+            "searching": true,
+            "language": {
+                "paginate": { "next": "Trang sau", "previous": "Trang trước" },
+                "info": "Hiển thị từ _START_ đến _END_ trong tổng số _TOTAL_ lượt ra ngoài",
+                "search": "Tìm kiếm:"
+            }
+        });
+        // Sự kiện khi click nút xem chi tiết
+        $(".table").on("click", ".btn-detail", function () {
+            var mactds = $(this).data("mactds");
+            var hoten = $(this).data("hotencn");
+            var tencv = $(this).data("tencv");
+            var capbac = $(this).data("capbac");
+            var tendv = $(this).data("tendv");
+            var lydo = $(this).data("lydo");
+            var diadiem = $(this).data("diadiem");
+            var hinhthuc = $(this).data("hinhthuc");
+            var thoigianra = $(this).data("thoigianra");
+            var thoigianvao = $(this).data("thoigianvao");
+
+            $("#md-mactds").text(mactds);
+            $("#md-hotencn").text(hoten);
+            $("#md-tencv").text(tencv);
+            $("#md-capbac").text(capbac);
+            $("#md-tendv").text(tendv);
+            $("#md-lydo").text(lydo);
+            $("#md-diadiem").text(diadiem);
+            $("#md-hinhthuc").text(hinhthuc);
+            $("#md-thoigianra").text(thoigianra);
+            $("#md-thoigianvao").text(thoigianvao);
+
+            $("#detailModal").modal('show');
+        });
+    </script>
 }
 <script src="~/Admin/plugins/jquery/jquery.min.js"></script>
 <script src="~/Admin/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>

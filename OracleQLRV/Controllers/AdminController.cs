@@ -8,6 +8,7 @@ using X.PagedList;
 using X.PagedList.Extensions;
 using Microsoft.EntityFrameworkCore;
 using System.Data;
+using Newtonsoft.Json;
 
 namespace OracleQLRV.Controllers
 {
@@ -744,64 +745,6 @@ namespace OracleQLRV.Controllers
         #region Quản lý danh sách     
         public IActionResult QuanLyDanhSach()
         {
-
-            var query = from ct in obj.Chitietdanhsaches
-                        join qn in obj.Quannhans on ct.Mahocvien equals qn.Maqn
-                        join cb in obj.Capbacs on qn.Macapbac equals cb.Macapbac
-                        join dv in obj.Donvis on qn.Madv equals dv.Madv
-                        join cv in obj.Chucvus on qn.Macv equals cv.Macv
-
-                        select new DSRN
-                        {
-                            MaCTDS = ct.Mactds,
-                            MaHocVien = ct.Mahocvien,
-                            LyDo = ct.Lydo,
-                            DiaDiem = ct.Diadiem,
-                            ThoiGianRa = ct.Thoigianra,
-                            ThoiGianVao = ct.Thoigianvao,
-                            TinhTrang = ct.Tinhtrang,
-                            HinhThucRn = ct.Hinhthucrn,
-                            MaCv = qn.Macv,
-                            MaDv = qn.Madv,
-                            MaCapBac = qn.Macapbac,
-                            CapBac1 = cb.Capbac1,
-                            TenCv = cv.Tencv,
-                            TenDv = dv.Tendv,
-                            DiaChi = qn.Diachi,
-                            HoTen = qn.Hoten
-                        };
-            // Tạo danh sách các tình trạng
-
-            var tinhTrang5 = query.Where(o => o.TinhTrang == 4).OrderBy(o => o.MaCTDS).ToList();
-            var tinhTrang0 = query.Where(o => o.TinhTrang == 0).OrderBy(o => o.MaCTDS).ToList();
-            var tinhTrang1 = query.Where(o => o.TinhTrang == 1).OrderBy(o => o.MaCTDS).ToList();
-            var tinhTrang2 = query.Where(o => o.TinhTrang == 2).OrderBy(o => o.MaCTDS).ToList();
-            var tinhTrang3 = query.Where(o => o.TinhTrang == 3).OrderBy(o => o.MaCTDS).ToList();
-            var tinhTrang4 = query.Where(o => o.TinhTrang == 4).OrderBy(o => o.MaCTDS).ToList();
-
-            
-           
-            ViewBag.pagedList5 = tinhTrang5;
-            ViewBag.pagedList0 = tinhTrang0;
-            ViewBag.pagedList1 = tinhTrang1;
-            ViewBag.pagedList2 = tinhTrang2;
-            ViewBag.pagedList3 = tinhTrang3;
-            ViewBag.pagedList4 = tinhTrang4;
-            
-
-            int totalOrders = obj.Chitietdanhsaches.Count(o => o.Tinhtrang == 4);
-            int unpaidOrdersCount = obj.Chitietdanhsaches.Count(o => o.Tinhtrang == 0);
-            int pendingOrdersCount = obj.Chitietdanhsaches.Count(o => o.Tinhtrang == 1);
-            int shippingOrdersCount = obj.Chitietdanhsaches.Count(o => o.Tinhtrang == 2);
-            int completedOrdersCount = obj.Chitietdanhsaches.Count(o => o.Tinhtrang == 3);
-            int canceledOrdersCount = obj.Chitietdanhsaches.Count(o => o.Tinhtrang == 4);
-
-            ViewBag.DaHoanThanh = totalOrders;
-            ViewBag.DaBiTuChoi = unpaidOrdersCount;
-            ViewBag.ChuaPheDuyet = pendingOrdersCount;
-            ViewBag.PheDuyetC = shippingOrdersCount;
-            ViewBag.PheDuyetD = completedOrdersCount;
-            ViewBag.PheDuyetCong = canceledOrdersCount;
             var query2 = from ct in obj.Chitietdanhsaches
                          join qn in obj.Quannhans on ct.Mahocvien equals qn.Maqn
                          join cb in obj.Capbacs on qn.Macapbac equals cb.Macapbac
@@ -831,12 +774,87 @@ namespace OracleQLRV.Controllers
                              HoTen = qn.Hoten
                          };
             List<DSGT> ds = query2.ToList();
-            HttpContext.Session.SetJson("DS", ds);
             List<Giayto> giayto = obj.Giaytos.Where(c => c.Tinhtrang == true).ToList();
-            HttpContext.Session.SetJson("GT", giayto);
-            var ds2 = query.Where(c => c.TinhTrang != 4 && c.TinhTrang != 0);
-            List<int> mahv = ds2.Select(c => c.MaHocVien).ToList();
             var hv = obj.Quannhans.Where(c => c.Macv == 1 || c.Macv == 2).ToList();
+            List<DSRN> dsrnList = new List<DSRN>();
+
+            using (var conn = obj.Database.GetDbConnection())
+            {
+                conn.Open();
+                using (var cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = "SP_GetAllDSRN";
+                    cmd.CommandType = CommandType.StoredProcedure;
+
+                    var pRefCursor = new Oracle.ManagedDataAccess.Client.OracleParameter("p_refCursor", Oracle.ManagedDataAccess.Client.OracleDbType.RefCursor, ParameterDirection.Output);
+                    cmd.Parameters.Add(pRefCursor);
+
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            var dsrn = new DSRN
+                            {
+                                MaCTDS = reader.GetInt32(reader.GetOrdinal("MaCTDS")),
+                                MaHocVien = reader.GetInt32(reader.GetOrdinal("MaHocVien")),
+                                LyDo = reader.IsDBNull(reader.GetOrdinal("LyDo")) ? null : reader.GetString(reader.GetOrdinal("LyDo")),
+                                DiaDiem = reader.IsDBNull(reader.GetOrdinal("DiaDiem")) ? null : reader.GetString(reader.GetOrdinal("DiaDiem")),
+                                ThoiGianRa = reader.GetDateTime(reader.GetOrdinal("ThoiGianRa")),
+                                ThoiGianVao = reader.GetDateTime(reader.GetOrdinal("ThoiGianVao")),
+                                TinhTrang = reader.GetInt32(reader.GetOrdinal("TinhTrang")),
+                                HinhThucRn = reader.IsDBNull(reader.GetOrdinal("HinhThucRn")) ? 0 : reader.GetInt32(reader.GetOrdinal("HinhThucRn")),
+                                MaCv = reader.GetInt32(reader.GetOrdinal("MaCv")),
+                                MaDv = reader.GetInt32(reader.GetOrdinal("MaDv")),
+                                MaCapBac = reader.GetInt32(reader.GetOrdinal("MaCapBac")),
+                                CapBac1 = reader.GetString(reader.GetOrdinal("Capbac")),
+                                TenCv = reader.GetString(reader.GetOrdinal("TenCv")),
+                                TenDv = reader.GetString(reader.GetOrdinal("TenDv")),
+                                DiaChi = reader.GetString(reader.GetOrdinal("DiaChi")),
+                                HoTen = reader.GetString(reader.GetOrdinal("HoTen"))
+                            };
+                            dsrnList.Add(dsrn);
+                        }
+                    }
+                }
+            }
+
+            // Bây giờ bạn có dsrnList tương đương query ban đầu, bạn có thể filter, count như code gốc
+            var tinhTrang5 = dsrnList.Where(o => o.TinhTrang == 4).OrderBy(o => o.MaCTDS).ToList();
+            var tinhTrang0 = dsrnList.Where(o => o.TinhTrang == 0).OrderBy(o => o.MaCTDS).ToList();
+            var tinhTrang1 = dsrnList.Where(o => o.TinhTrang == 1).OrderBy(o => o.MaCTDS).ToList();
+            var tinhTrang2 = dsrnList.Where(o => o.TinhTrang == 2).OrderBy(o => o.MaCTDS).ToList();
+            var tinhTrang3 = dsrnList.Where(o => o.TinhTrang == 3).OrderBy(o => o.MaCTDS).ToList();
+            var tinhTrang4 = dsrnList.Where(o => o.TinhTrang == 4).OrderBy(o => o.MaCTDS).ToList();
+
+            ViewBag.pagedList5 = tinhTrang5;
+            ViewBag.pagedList0 = tinhTrang0;
+            ViewBag.pagedList1 = tinhTrang1;
+            ViewBag.pagedList2 = tinhTrang2;
+            ViewBag.pagedList3 = tinhTrang3;
+            ViewBag.pagedList4 = tinhTrang4;
+
+            int totalOrders = dsrnList.Count(o => o.TinhTrang == 4);
+            int unpaidOrdersCount = dsrnList.Count(o => o.TinhTrang == 0);
+            int pendingOrdersCount = dsrnList.Count(o => o.TinhTrang == 1);
+            int shippingOrdersCount = dsrnList.Count(o => o.TinhTrang == 2);
+            int completedOrdersCount = dsrnList.Count(o => o.TinhTrang == 3);
+            int canceledOrdersCount = dsrnList.Count(o => o.TinhTrang == 4);
+
+            ViewBag.DaHoanThanh = totalOrders;
+            ViewBag.DaBiTuChoi = unpaidOrdersCount;
+            ViewBag.ChuaPheDuyet = pendingOrdersCount;
+            ViewBag.PheDuyetC = shippingOrdersCount;
+            ViewBag.PheDuyetD = completedOrdersCount;
+            ViewBag.PheDuyetCong = canceledOrdersCount;
+
+            
+           
+            HttpContext.Session.SetJson("DS", ds);
+ 
+            HttpContext.Session.SetJson("GT", giayto);
+            var ds2 = dsrnList.Where(c => c.TinhTrang != 4 && c.TinhTrang != 0);
+            List<int> mahv = ds2.Select(c => c.MaHocVien).ToList();
+          
             var hocvien = hv.Where(c => !mahv.Contains(c.Maqn)).ToList();
             HttpContext.Session.SetJson("HV", hocvien);
             return View();
@@ -1502,7 +1520,7 @@ namespace OracleQLRV.Controllers
 
         #endregion
         #region Quản lý danh sách ra ngoài- giấy tờ
-        public IActionResult QuanLyDSGT(int page = 1, int pageSize = 5)
+        public IActionResult QuanLyDSGT()
         {
 
             var query = from ct in obj.Chitietdanhsaches
@@ -1533,15 +1551,9 @@ namespace OracleQLRV.Controllers
                             ThoiGianVao = ct.Thoigianvao,
                             HoTen = qn.Hoten
                         };
-            var model = query.Skip((page - 1) * pageSize).Take(pageSize).ToList();
 
-            // Tính toán thông tin phân trang
-            var totalItemCount = query.Count();
-            var pagedList = new StaticPagedList<DSGT>(model, page, pageSize, totalItemCount);
-            ViewBag.PageStartItem = (page - 1) * pageSize + 1;
-            ViewBag.PageEndItem = Math.Min(page * pageSize, totalItemCount);
-            ViewBag.Page = page;
-            ViewBag.TotalItemCount = totalItemCount;
+            var pagedList = query.ToList();
+          
             List<Rangoai> rn = obj.Rangoais.ToList();
             HttpContext.Session.SetJson("RN", rn);
             return View(pagedList);
@@ -1752,60 +1764,27 @@ namespace OracleQLRV.Controllers
         #endregion
 
         #region Lịch sử ra ngoài
-        public IActionResult LichSu(int page = 1, int pageSize = 5)
+        public IActionResult LichSu()
         {
+            // Giờ chỉ cần lấy từ bảng LICH_SU_JSON
+            var lichSuJsonList = obj.LichSuJsons
+                          .FromSqlRaw("SELECT JSON_DATA FROM LICH_SU_JSON")
+                          .Select(x => x.JsonData)
+                          .ToList();
 
-            var query = from ct in obj.Chitietdanhsaches
-                        join qn in obj.Quannhans on ct.Mahocvien equals qn.Maqn
-                        join cb in obj.Capbacs on qn.Macapbac equals cb.Macapbac
-                        join dv in obj.Donvis on qn.Madv equals dv.Madv
-                        join cv in obj.Chucvus on qn.Macv equals cv.Macv
-                        join dsgt in obj.ChitietdanhsachGiaytos on ct.Mactds equals dsgt.Mactds
-                        join gt in obj.Giaytos on dsgt.Magiayto equals gt.Magiayto
-                        join ra in obj.Rangoais on ct.Mactds equals ra.Mactds
-                        join cbd in obj.CanboDuyets on ct.Mactds equals cbd.Mactds
-                        where cbd.Ghichu == "Phê duyệt tiểu đoàn" && (ct.Tinhtrang == 4 || ct.Tinhtrang == 0)
-                        select new LS
-                        {
-                            MaCtds = dsgt.Mactds,
-                            MaHocVien = ct.Mahocvien,
-                            MaGiayTo = dsgt.Magiayto,
-                            DaTra = gt.Tinhtrang,
-                            ThoiGianLay = dsgt.Thoigianlay,
-                            ThoiGianTra = dsgt.Thoigiantra,
-                            SoGiay = gt.Sogiay,
-                            ThoiGianRa = ct.Thoigianra,
-                            ThoiGianVao = ct.Thoigianvao,
-                            TinhTrang = ct.Tinhtrang,
-                            HoTen = qn.Hoten,
-                            DiaChi = qn.Diachi,
-                            MaCv = qn.Macv,
-                            MaDv = qn.Madv,
-                            MaCapBac = qn.Macapbac,
-                            CapBac1 = cb.Capbac1,
-                            TenCv = cv.Tencv,
-                            TenDv = dv.Tendv,
-                            LyDo = ct.Lydo,
-                            DiaDiem = ct.Diadiem,
-                            HinhThucRn = ct.Hinhthucrn,
-                            NguoiDuyet = cbd.Macb,
-                            ThoiGianRaC = ra.Thoigianra,
-                            ThoiGianVaoC = ra.Thoigianvao
-                        };
 
-            var model = query.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+            // Deserialize từ JSON sang model LS (cần dùng Newtonsoft.Json hoặc System.Text.Json)
+            List<LS> model = new List<LS>();
+            foreach (var jsonStr in lichSuJsonList)
+            {
+                LS item = JsonConvert.DeserializeObject<LS>(jsonStr); // nếu dùng Newtonsoft.Json
+                model.Add(item);
+            }
 
-            // Tính toán thông tin phân trang
-            var totalItemCount = query.Count();
-            var pagedList = new StaticPagedList<LS>(model, page, pageSize, totalItemCount);
-            ViewBag.PageStartItem = (page - 1) * pageSize + 1;
-            ViewBag.PageEndItem = Math.Min(page * pageSize, totalItemCount);
-            ViewBag.Page = page;
-            ViewBag.TotalItemCount = totalItemCount;
+            // Phần còn lại như cũ
             List<Quannhan> rn = obj.Quannhans.ToList();
             HttpContext.Session.SetJson("QN", rn);
-            return View(pagedList);
-
+            return View(model);
         }
         #endregion
 
