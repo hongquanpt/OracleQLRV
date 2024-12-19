@@ -114,7 +114,7 @@ else
 
                                 <!-- /.card-header -->
                                 <div class="card-body">
-                                    <table id="example1" class="table table-bordered table-striped">
+                                    <table id="brandTable" class="table table-bordered table-striped">
                                         <thead>
                                             <tr>
                                                 <th>Mã TK</th>
@@ -224,9 +224,28 @@ else
             </div>
         </div>
     </div>
-
+    <script src="~/Admin/plugins/jquery/jquery.min.js"></script>
+    <script src="~/Admin/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="~/Admin/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css">
+    <link rel="stylesheet" href="~/Admin/plugins/datatables-responsive/css/responsive.bootstrap4.min.css">
+    <script src="~/Admin/plugins/datatables/jquery.dataTables.min.js"></script>
+    <script src="~/Admin/plugins/datatables-bs4/js/dataTables.bootstrap4.min.js"></script>
+    <script src="~/Admin/plugins/datatables-responsive/js/dataTables.responsive.min.js"></script>
+    <script src="~/Admin/plugins/datatables-responsive/js/responsive.bootstrap4.min.js"></script>
+    <script src="~/Admin/dist/js/adminlte.min.js"></script>
     <!-- Đoạn mã JavaScript để xử lý sự kiện xóa -->
     <script>
+        $('#brandTable').DataTable({
+                       "paging": true,
+                       "ordering": true,
+                       "info": true,
+                       "searching": true,
+                       "language": {
+                           "paginate": { "next": "Trang sau", "previous": "Trang trước" },
+                           "info": "Hiển thị từ _START_ đến _END_ của _TOTAL_ đơn vị",
+                           "search": "Tìm kiếm:"
+                       }
+                   });
         function Them() {
             var form = document.getElementById("frmThemTaiKhoan");
             form.setAttribute("aria-hidden", "false");

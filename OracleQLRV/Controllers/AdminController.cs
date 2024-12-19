@@ -923,134 +923,41 @@ namespace OracleQLRV.Controllers
         }
         public IActionResult All1(int maqn)
         {
-
-            // Lấy danh sách chi tiết đánh sách có trạng thái là 1
-            var danhSachChiTiet = obj.Chitietdanhsaches.Where(c => c.Tinhtrang == 1).ToList();
-
-            // Lấy danh sách ID của vi phạm
-            List<int> viphamsIds = obj.Viphams.Select(v => v.Mahv).ToList();
-            //List<string> diachi= obj.Quannhans.Select(v=>v.DiaChi).ToList();
-            // Kiểm tra xem danh sách ID của vi phạm có dữ liệu và danh sách chi tiết có dữ liệu không
-            if (viphamsIds.Any() && danhSachChiTiet != null && danhSachChiTiet.Any())
+            using (var conn = obj.Database.GetDbConnection())
             {
-                // Lọc và chỉ giữ lại các đối tượng không có mã trong danh sách vi phạm
-                var danhSachKhongViPham = danhSachChiTiet.Where(c => !viphamsIds.Contains(c.Mahocvien)).ToList();
-                var danhSachViPham = danhSachChiTiet.Where(c => viphamsIds.Contains(c.Mahocvien)).ToList();
-                // Cập nhật trạng thái trực tiếp trong cơ sở dữ liệu
-                foreach (var chiTiet in danhSachKhongViPham)
+                conn.Open();
+                using (var cmd = conn.CreateCommand())
                 {
-                    // Kiểm tra nếu HinhThuc là 1 trong danhSachChiTiet
-                    if (chiTiet.Hinhthucrn == 1)
-                    {
-                        string diachi = obj.Quannhans.Where(c => c.Maqn == chiTiet.Mahocvien).FirstOrDefault().Diachi;
-                        // So sánh địa chỉ với obj.QuanNhans và gán TinhTrang tùy thuộc vào kết quả
-                        if (chiTiet.Diadiem.Contains(diachi))
-                        {
-                            var duyet = new CanboDuyet
-                            {
-                                Mactds = chiTiet.Mactds,
-                                Macb = maqn,
-                                Thoigianduyet = DateTime.Now,
-                                Ghichu = "Từ chối đại đội"
-                            };
+                    cmd.CommandText = "SP_All1";
+                    cmd.CommandType = CommandType.StoredProcedure;
 
-                            // Add the entity to the context
-                            obj.CanboDuyets.Add(duyet);
-                            chiTiet.Tinhtrang = 0;
-                        }
-                        else
-                        {
-                            var duyet = new CanboDuyet
-                            {
-                                Mactds = chiTiet.Mactds,
-                                Macb = maqn,
-                                Thoigianduyet = DateTime.Now,
-                                Ghichu = "Phê duyệt đại đội"
-                            };
+                    var pMaqn = new Oracle.ManagedDataAccess.Client.OracleParameter("p_maqn", Oracle.ManagedDataAccess.Client.OracleDbType.Int32, maqn, ParameterDirection.Input);
+                    cmd.Parameters.Add(pMaqn);
 
-                            // Add the entity to the context
-                            obj.CanboDuyets.Add(duyet);
-                            chiTiet.Tinhtrang = 2;
-                        }
-                    }
-                    else
-                    {
-                        var duyet = new CanboDuyet
-                        {
-                            Mactds = chiTiet.Mactds,
-                            Macb = maqn,
-                            Thoigianduyet = DateTime.Now,
-                            Ghichu = "Phê duyệt đại đội"
-                        };
-
-                        // Add the entity to the context
-                        obj.CanboDuyets.Add(duyet);
-                        // Nếu HinhThuc có giá trị khác 1, gán TinhTrang = 2
-                        chiTiet.Tinhtrang = 2;
-                    }
+                    cmd.ExecuteNonQuery();
                 }
-                foreach (var chiTiet in danhSachViPham)
-                {
-                    var duyet = new CanboDuyet
-                    {
-                        Mactds = chiTiet.Mactds,
-                        Macb = maqn,
-                        Thoigianduyet = DateTime.Now,
-                        Ghichu = "Từ chối đại đội"
-                    };
-
-                    // Add the entity to the context
-                    obj.CanboDuyets.Add(duyet);
-                    chiTiet.Tinhtrang = 0;
-                }
-                // Lưu thay đổi vào cơ sở dữ liệu
-                obj.SaveChanges();
-
-                return Json(new
-                {
-                    status = true
-                });
             }
-            else
-            {
-                return Json(new
-                {
-                    status = false
-                });
-            }
+            return Json(new { status = true });
         }
+
 
         public IActionResult AllT1(int maqn)
         {
-            var danhSachChiTiet = obj.Chitietdanhsaches.Where(c => c.Tinhtrang == 1).ToList();
-            if (danhSachChiTiet != null && danhSachChiTiet.Any())
+            using (var conn = obj.Database.GetDbConnection())
             {
-                foreach (var chiTiet in danhSachChiTiet)
+                conn.Open();
+                using (var cmd = conn.CreateCommand())
                 {
-                    var duyet = new CanboDuyet
-                    {
-                        Mactds = chiTiet.Mactds,
-                        Macb = maqn,
-                        Thoigianduyet = DateTime.Now,
-                        Ghichu = "Từ chối đại đội"
-                    };
-                    chiTiet.Tinhtrang = 0;
-                }
-                // Lưu thay đổi vào cơ sở dữ liệu
-                obj.SaveChanges();
+                    cmd.CommandText = "SP_AllT1";
+                    cmd.CommandType = CommandType.StoredProcedure;
 
-                return Json(new
-                {
-                    status = true
-                });
+                    var pMaqn = new Oracle.ManagedDataAccess.Client.OracleParameter("p_maqn", Oracle.ManagedDataAccess.Client.OracleDbType.Int32, maqn, ParameterDirection.Input);
+                    cmd.Parameters.Add(pMaqn);
+
+                    cmd.ExecuteNonQuery();
+                }
             }
-            else
-            {
-                return Json(new
-                {
-                    status = false
-                });
-            }
+            return Json(new { status = true });
         }
 
         // Duyet d
@@ -1257,7 +1164,7 @@ namespace OracleQLRV.Controllers
             var tinhtrang = obj.Chitietdanhsaches.Find(id);
             tinhtrang.Tinhtrang = 4;
             var ct = obj.ChitietdanhsachGiaytos.Where(c => c.Mactds == id && c.Magiayto == magiay).FirstOrDefault();
-            ct.Thoigiantra = thoigianTra;
+            ct.Thoigiantra = DateTime.Now; 
             obj.SaveChanges();
             return Json(new
             {
@@ -1522,43 +1429,56 @@ namespace OracleQLRV.Controllers
         #region Quản lý danh sách ra ngoài- giấy tờ
         public IActionResult QuanLyDSGT()
         {
-
-            var query = from ct in obj.Chitietdanhsaches
-                        join qn in obj.Quannhans on ct.Mahocvien equals qn.Maqn
-                        join cb in obj.Capbacs on qn.Macapbac equals cb.Macapbac
-                        join dv in obj.Donvis on qn.Madv equals dv.Madv
-                        join cv in obj.Chucvus on qn.Macv equals cv.Macv
-                        join dsgt in obj.ChitietdanhsachGiaytos on ct.Mactds equals dsgt.Mactds
-                        join gt in obj.Giaytos on dsgt.Magiayto equals gt.Magiayto
-                        where ct.Tinhtrang == 3
-                        select new DSGT
-                        {
-                            MaCtds = dsgt.Mactds,
-                            MaHocVien = ct.Mahocvien,
-                            MaGiayTo = dsgt.Magiayto,
-                            SoGiay = gt.Sogiay,
-                            ThoiGianLay = dsgt.Thoigianlay,
-                            ThoiGianTra = dsgt.Thoigiantra,
-                            DaTra = gt.Tinhtrang,
-                            MaCv = qn.Macv,
-                            MaDv = qn.Madv,
-                            MaCapBac = qn.Macapbac,
-                            CapBac1 = cb.Capbac1,
-                            TenCv = cv.Tencv,
-                            TenDv = dv.Tendv,
-                            TinhTrang = ct.Tinhtrang,
-                            ThoiGianRa = ct.Thoigianra,
-                            ThoiGianVao = ct.Thoigianvao,
-                            HoTen = qn.Hoten
-                        };
-
-            var pagedList = query.ToList();
-          
-            List<Rangoai> rn = obj.Rangoais.ToList();
+            List<Rangoai> rn = obj.Rangoais.ToList(); // Nếu muốn chuyển sang SP, tạo SP_GetAllRangoais tương tự.
             HttpContext.Session.SetJson("RN", rn);
-            return View(pagedList);
+            List<DSGT> pagedList = new List<DSGT>();
 
+            using (var conn = obj.Database.GetDbConnection())
+            {
+                conn.Open();
+                using (var cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = "SP_GetAllDSGT";
+                    cmd.CommandType = CommandType.StoredProcedure;
+
+                    var pRefCursor = new Oracle.ManagedDataAccess.Client.OracleParameter("p_refCursor",
+                        Oracle.ManagedDataAccess.Client.OracleDbType.RefCursor, System.Data.ParameterDirection.Output);
+                    cmd.Parameters.Add(pRefCursor);
+
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            var item = new DSGT
+                            {
+                                MaCtds = reader.GetInt32(reader.GetOrdinal("MaCtds")),
+                                MaHocVien = reader.GetInt32(reader.GetOrdinal("MaHocVien")),
+                                MaGiayTo = reader.GetInt32(reader.GetOrdinal("MaGiayTo")),
+                                SoGiay = reader.GetInt32(reader.GetOrdinal("SoGiay")),
+                                ThoiGianLay = reader.GetDateTime(reader.GetOrdinal("ThoiGianLay")),
+                                ThoiGianTra = reader.IsDBNull(reader.GetOrdinal("ThoiGianTra")) ? (DateTime?)null : reader.GetDateTime(reader.GetOrdinal("ThoiGianTra")),
+                                DaTra = reader.GetBoolean(reader.GetOrdinal("DaTra")), // Kiểm tra kiểu dữ liệu cột Tinhtrang trong Giaytos
+                                MaCv = reader.GetInt32(reader.GetOrdinal("MaCv")),
+                                MaDv = reader.GetInt32(reader.GetOrdinal("MaDv")),
+                                MaCapBac = reader.GetInt32(reader.GetOrdinal("MaCapBac")),
+                                CapBac1 = reader.GetString(reader.GetOrdinal("Capbac")),
+                                TenCv = reader.GetString(reader.GetOrdinal("TenCv")),
+                                TenDv = reader.GetString(reader.GetOrdinal("TenDv")),
+                                TinhTrang = reader.GetInt32(reader.GetOrdinal("TinhTrang")),
+                                ThoiGianRa = reader.GetDateTime(reader.GetOrdinal("ThoiGianRa")),
+                                ThoiGianVao = reader.IsDBNull(reader.GetOrdinal("ThoiGianVao")) ? (DateTime?)null : reader.GetDateTime(reader.GetOrdinal("ThoiGianVao")),
+                                HoTen = reader.GetString(reader.GetOrdinal("HoTen"))
+                            };
+                            pagedList.Add(item);
+                        }
+                    }
+                }
+            }
+
+
+            return View(pagedList);
         }
+
         public IActionResult RaNgoai(int id, int magiay, DateTime thoigianra)
         {
             // int max = obj.Rangoais.Max(r => r.MaRn);

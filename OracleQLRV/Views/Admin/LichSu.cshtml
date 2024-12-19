@@ -4,6 +4,7 @@
 @using Microsoft.AspNetCore.Http
 @using OracleQLRV.DTO;
 @inject IHttpContextAccessor HttpContextAccessor
+
 @{
     Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
     List<AccountRole> data = HttpContextAccessor.HttpContext.Session.GetJson<List<AccountRole>>("QuyenTK") ?? new List<AccountRole>();
@@ -75,7 +76,6 @@
                 document.getElementById('fullscreenAlert').style.display = 'none';
             }
 
-            // Gọi hàm này khi trang web được tải
             document.addEventListener('DOMContentLoaded', function () {
                 showFullscreenAlert();
             });
@@ -83,8 +83,6 @@
 
     </body>
     </html>
-
-
 }
 else
 {
@@ -100,58 +98,54 @@ else
                                 </div>
 
                                 <div class="card-body">
-                                    <table id="example2" class="table table-bordered table-hover">
+                                    <!-- Chỉ hiển thị một số trường chính -->
+                                    <table id="lichSuTable" class="table table-bordered table-hover">
                                         <thead>
                                             <tr>
-
                                                 <th>Họ tên</th>
-                                                <th>Chức vụ</th>
-                                                <th>Cấp bậc</th>
                                                 <th>Đơn vị</th>
-                                                <th>Địa chỉ</th>
-                                                <th>Thời gian đi phép</th>
-                                                <th>Thời gian trả phép</th>
                                                 <th>Số giấy</th>
-                                                <th>Cán bộ duyệt phép</th>
                                                 <th>Tình trạng</th>
-                                                <th>Thời gian lấy giấy</th>
-                                                <th>Thời gian trả giấy</th>
-                                                <th>Thời gian ra cổng</th>
-                                                <th>Thời gian vào cổng</th>
+                                                <th>Hành động</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             @foreach (var item in Model)
                                             {
+                                                var canBoDuyet = qn.Where(c => c.Maqn == item.NguoiDuyet).FirstOrDefault()?.Hoten;
+                                                string tinhTrang = "";
+                                                if (item.TinhTrang == 4) tinhTrang = "Đã hoàn thành";
+                                                else if (item.TinhTrang == 0) tinhTrang = "Bị từ chối";
+
                                                 <tr>
                                                     <td>@item.HoTen</td>
-                                                    <td>@item.TenCv</td>
-                                                    <td>@item.CapBac1</td>
                                                     <td>@item.TenDv</td>
-                                                    <td>@item.DiaChi</td>
-                                                    <td>@item.ThoiGianRa</td>
-                                                    <td>@item.ThoiGianVao</td>
                                                     <td>@item.SoGiay</td>
-
-                                                    <td>@qn.Where(c => c.Maqn == item.NguoiDuyet).FirstOrDefault().Hoten</td>
-                                                    @if (item.TinhTrang == 4)
-                                                    {
-                                                        <td>Đã hoàn thành</td>
-                                                    }
-                                                    @if (item.TinhTrang == 0)
-                                                    {
-                                                        <td>Bị từ chối</td>
-                                                    }
-                                                    <td>@item.ThoiGianLay</td>
-                                                    <td>@item.ThoiGianTra</td>
-                                                    <td>@item.ThoiGianRaC</td>
-                                                    <td>@item.ThoiGianVaoC</td>
+                                                    <td>@tinhTrang</td>
+                                                    <td>
+                                                        <button class="btn btn-info btn-sm btn-detail"
+                                                                data-hotencn="@item.HoTen"
+                                                                data-tencv="@item.TenCv"
+                                                                data-capbac="@item.CapBac1"
+                                                                data-tendv="@item.TenDv"
+                                                                data-diachi="@item.DiaChi"
+                                                                data-thoigianra="@item.ThoiGianRa"
+                                                                data-thoigianvao="@item.ThoiGianVao"
+                                                                data-sogiay="@item.SoGiay"
+                                                                data-canboduyet="@canBoDuyet"
+                                                                data-tinhtrang="@tinhTrang"
+                                                                data-thoigianlay="@item.ThoiGianLay"
+                                                                data-thoigiantra="@item.ThoiGianTra"
+                                                                data-thoigianrac="@item.ThoiGianRaC"
+                                                                data-thoigianvaoc="@item.ThoiGianVaoC">
+                                                            Xem chi tiết
+                                                        </button>
+                                                    </td>
                                                 </tr>
                                             }
                                         </tbody>
-
                                     </table>
-                                   
+
                                 </div>
                                 <div class="card-footer">
                                 </div>
@@ -168,13 +162,42 @@ else
             </section>
 
         </div>
-
-
-
-
-
     </div>
 }
+
+<!-- Modal chi tiết -->
+<div class="modal fade" id="detailModal" tabindex="-1" role="dialog" aria-labelledby="detailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><b>Chi tiết lịch sử ra ngoài</b></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Họ tên:</strong> <span id="md-hotencn"></span></p>
+                <p><strong>Chức vụ:</strong> <span id="md-tencv"></span></p>
+                <p><strong>Cấp bậc:</strong> <span id="md-capbac"></span></p>
+                <p><strong>Đơn vị:</strong> <span id="md-tendv"></span></p>
+                <p><strong>Địa chỉ:</strong> <span id="md-diachi"></span></p>
+                <p><strong>Thời gian đi phép:</strong> <span id="md-thoigianra"></span></p>
+                <p><strong>Thời gian trả phép:</strong> <span id="md-thoigianvao"></span></p>
+                <p><strong>Số giấy:</strong> <span id="md-sogiay"></span></p>
+                <p><strong>Cán bộ duyệt phép:</strong> <span id="md-canboduyet"></span></p>
+                <p><strong>Tình trạng:</strong> <span id="md-tinhtrang"></span></p>
+                <p><strong>Thời gian lấy giấy:</strong> <span id="md-thoigianlay"></span></p>
+                <p><strong>Thời gian trả giấy:</strong> <span id="md-thoigiantra"></span></p>
+                <p><strong>Thời gian ra cổng:</strong> <span id="md-thoigianrac"></span></p>
+                <p><strong>Thời gian vào cổng:</strong> <span id="md-thoigianvaoc"></span></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="~/Admin/plugins/jquery/jquery.min.js"></script>
 <script src="~/Admin/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
 <link rel="stylesheet" href="~/Admin/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css">
@@ -184,3 +207,54 @@ else
 <script src="~/Admin/plugins/datatables-responsive/js/dataTables.responsive.min.js"></script>
 <script src="~/Admin/plugins/datatables-responsive/js/responsive.bootstrap4.min.js"></script>
 <script src="~/Admin/dist/js/adminlte.min.js"></script>
+<script>
+    $(document).ready(function () {
+        $('#lichSuTable').DataTable({
+            "paging": true,
+            "ordering": true,
+            "info": true,
+            "searching": true,
+            "language": {
+                "paginate": { "next": "Trang sau", "previous": "Trang trước" },
+                "info": "Hiển thị từ _START_ đến _END_ trong tổng số _TOTAL_ mục",
+                "search": "Tìm kiếm:"
+            }
+        });
+
+        // Sự kiện click nút "Xem chi tiết"
+        $(".table").on("click", ".btn-detail", function () {
+            var hotencn = $(this).data("hotencn");
+            var tencv = $(this).data("tencv");
+            var capbac = $(this).data("capbac");
+            var tendv = $(this).data("tendv");
+            var diachi = $(this).data("diachi");
+            var thoigianra = $(this).data("thoigianra");
+            var thoigianvao = $(this).data("thoigianvao");
+            var sogiay = $(this).data("sogiay");
+            var canboduyet = $(this).data("canboduyet");
+            var tinhtrang = $(this).data("tinhtrang");
+            var thoigianlay = $(this).data("thoigianlay");
+            var thoigiantra = $(this).data("thoigiantra");
+            var thoigianrac = $(this).data("thoigianrac");
+            var thoigianvaoc = $(this).data("thoigianvaoc");
+
+            // Điền dữ liệu vào modal
+            $("#md-hotencn").text(hotencn);
+            $("#md-tencv").text(tencv);
+            $("#md-capbac").text(capbac);
+            $("#md-tendv").text(tendv);
+            $("#md-diachi").text(diachi);
+            $("#md-thoigianra").text(thoigianra);
+            $("#md-thoigianvao").text(thoigianvao);
+            $("#md-sogiay").text(sogiay);
+            $("#md-canboduyet").text(canboduyet);
+            $("#md-tinhtrang").text(tinhtrang);
+            $("#md-thoigianlay").text(thoigianlay);
+            $("#md-thoigiantra").text(thoigiantra);
+            $("#md-thoigianrac").text(thoigianrac);
+            $("#md-thoigianvaoc").text(thoigianvaoc);
+
+            $("#detailModal").modal('show');
+        });
+    });
+</script>
